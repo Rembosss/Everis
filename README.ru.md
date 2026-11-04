@@ -1,7 +1,5 @@
 # Everis
 
-![Everis](assets/everis-icon-128.png)
-
 [English](README.md) · **Русский**
 
 Независимый электронный дневник для Android: расписание вуза, домашние задания и локальные напоминания в интерфейсе Material 3 Expressive.
