@@ -1,42 +1,44 @@
 # Everis
 
-Независимый электронный дневник для Android: расписание вуза, домашние задания и локальные напоминания в интерфейсе Material 3 Expressive.
+**English** · [Русский](README.ru.md)
 
-**Статус: подготовка 0.1-beta.** Это ранняя версия для тестирования и сбора обратной связи. Исходники и установочные файлы будут опубликованы отдельно; создание репозитория не означает готовность публичного релиза.
+An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
-## Возможности
+**Status: preparing 0.1-beta.** This early version is intended for testing and feedback. Source code and APKs will be published separately; the repository setup is not a public release announcement.
 
-- Загрузка публичного расписания и работа с сохранёнными данными без интернета.
-- Расписание на день, неделю и месяц, подгруппы, время занятий и перерывов.
-- Домашние задания к следующему занятию, общий список и напоминания.
-- Список дисциплин с преподавателями и статистикой нагрузки.
-- Периодическая и вечерняя проверка изменений расписания.
-- Обмен расписанием и резервные копии через локальные JSON-файлы.
-- Светлая, тёмная и чёрная темы, динамический акцент Monet и собственный цвет.
-- Русский, украинский, белорусский, казахский и английский языки.
+## Features
 
-Сейчас подключён публичный источник РГЭУ (РИНХ). Поддержка других вузов планируется. Everis — самостоятельный проект, не официальный продукт и не сервис вуза.
+- Download public university timetables and use saved schedules offline.
+- Day, week and month views, subgroup filtering, class and break totals.
+- Homework for the next class, a task list and reminders.
+- Disciplines with teachers and study load statistics.
+- Periodic and evening schedule change checks.
+- Offline schedule sharing and local JSON backups.
+- Light, dark and black themes, Monet dynamic colors and custom accents.
+- Russian, Ukrainian, Belarusian, Kazakh and English interfaces.
 
-## Приватность
+The current adapter supports the public timetable of Rostov State University of Economics (RSUE/RINH). Other universities are planned. Everis is an independent project and is not an official university app or service.
 
-Расписание, задания и настройки хранятся на устройстве. У Everis нет собственного сервера, аккаунтов, телеметрии и облачной синхронизации. Приложение обращается к публичному источнику расписания; проверка обновлений использует GitHub Releases, изображения участников — публичные Telegram-профили с локальным кешем. Для этого не нужна авторизация в GitHub или Telegram.
+## Privacy
 
-## Совместимость
+Timetables, homework and preferences are stored on your device. Everis has no application server, user accounts, telemetry or cloud sync. It accesses public university timetable sources; update checks use GitHub Releases, and contributor images come from public Telegram profiles with a local cache. No GitHub or Telegram sign-in is required in the app.
 
-Android 12 и новее. Единственная поддерживаемая архитектура — ARM64 (`arm64-v8a`), включая отладочные и релизные сборки. ARMv7 и x86_64 не поддерживаются.
+## Compatibility
 
-Подписанные APK и описание изменений будут доступны в [Releases](https://github.com/Rembos1k/Everis/releases). Установка обновлений подтверждается пользователем средствами Android.
+Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-## Обратная связь
+Signed APKs and change notes will be available in [Releases](https://github.com/Rembos1k/Everis/releases). Android requires user confirmation to install updates.
 
-- [Telegram-канал проекта](https://t.me/EverisProject)
-- [Разработчик: Rembos1k](https://t.me/Rembos1k)
-- [Сообщить об ошибке](https://github.com/Rembos1k/Everis/issues)
+## Feedback
 
-При описании ошибки укажите версию Everis, Android и шаги воспроизведения. Не публикуйте личные задания, резервные копии и приватные журналы.
+- [Project Telegram channel](https://t.me/EverisProject)
+- [Developer: Rembos1k](https://t.me/Rembos1k)
+- [Report an issue](https://github.com/Rembos1k/Everis/issues)
 
-## Участники и благодарности
+Include your Everis version, Android version and steps to reproduce the problem. Do not publish personal homework, backups or private logs.
 
-Автор проекта — [Rembos1k](https://github.com/Rembos1k). Помощь в разработке — [Codex](https://openai.com/codex/).
+## Contributors and acknowledgements
 
-Особая благодарность [@Gods_Mask](https://t.me/Gods_Mask) за предоставленную подписку Codex.
+Created by [Rembos1k](https://github.com/Rembos1k), with development assistance from [Codex](https://openai.com/codex/).
+
+Special thanks to [@Gods_Mask](https://t.me/Gods_Mask) for providing a Codex subscription.
