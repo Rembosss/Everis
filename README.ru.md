@@ -37,8 +37,9 @@ Android 12 и новее. Единственная поддерживаемая 
 
 При описании ошибки укажите версию Everis, Android и шаги воспроизведения. Не публикуйте личные задания, резервные копии и приватные журналы.
 
-## Участники и благодарности
+## Разработчики
 
-Автор проекта — [Rembos1k](https://github.com/Rembos1k). Помощь в разработке — [Codex](https://openai.com/codex/).
+- [Rembos1k](https://github.com/Rembos1k)
+- [Codex](https://openai.com/codex/)
 
 Особая благодарность [@Gods_Mask](https://t.me/Gods_Mask) за предоставленную подписку Codex.
