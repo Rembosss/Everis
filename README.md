@@ -1,5 +1,7 @@
 # Everis
 
+<p align="center"><img src="assets/everis-icon.png" alt="Everis" width="128" height="128"></p>
+
 **English** · [Русский](README.ru.md)
 
 An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
