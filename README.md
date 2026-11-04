@@ -1,6 +1,6 @@
 # Everis
 
-![Everis](./assets/everis-icon.svg)
+![Everis](assets/everis-icon-128.png)
 
 **English** · [Русский](README.ru.md)
 
