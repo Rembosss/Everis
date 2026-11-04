@@ -37,8 +37,9 @@ Signed APKs and change notes will be available in [Releases](https://github.com/
 
 Include your Everis version, Android version and steps to reproduce the problem. Do not publish personal homework, backups or private logs.
 
-## Contributors and acknowledgements
+## Developers
 
-Created by [Rembos1k](https://github.com/Rembos1k), with development assistance from [Codex](https://openai.com/codex/).
+- [Rembos1k](https://github.com/Rembos1k)
+- [Codex](https://openai.com/codex/)
 
 Special thanks to [@Gods_Mask](https://t.me/Gods_Mask) for providing a Codex subscription.
