@@ -1,6 +1,6 @@
 # Everis
 
-<p align="center"><img src="assets/everis-icon.png" alt="Everis" width="128" height="128"></p>
+<p align="center"><img src="https://github.com/Rembos1k/Everis/blob/main/assets/everis-icon.png?raw=true" alt="Everis" width="128" height="128"></p>
 
 **English** · [Русский](README.ru.md)
 
