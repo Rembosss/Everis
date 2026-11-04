@@ -4,7 +4,7 @@
 
 An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
-**Status: preparing 0.1-beta.** This early version is intended for testing and feedback. Source code and APKs will be published separately; the repository setup is not a public release announcement.
+**[0.1-beta is available](https://github.com/Rembos1k/Everis/releases/tag/0.1-beta).** This early beta is intended for testing and feedback.
 
 ## Features
 
@@ -27,7 +27,11 @@ Timetables, homework and preferences are stored on your device. Everis has no ap
 
 Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-Signed APKs and change notes will be available in [Releases](https://github.com/Rembos1k/Everis/releases). Android requires user confirmation to install updates.
+Download the signed **[ARM64 Release APK](https://github.com/Rembos1k/Everis/releases/download/0.1-beta/Everis-0.1-beta-arm64-v8a-release.apk)** from [Releases](https://github.com/Rembos1k/Everis/releases). Package: `org.everis.app`. Android requires user confirmation to install updates.
+
+## Build from source
+
+See [Development](docs/DEVELOPMENT.md) for the pinned toolchain, build commands and checks. Official signing credentials, local configuration and generated artifacts are not included in the source tree.
 
 ## Feedback
 

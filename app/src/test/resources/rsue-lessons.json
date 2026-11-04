@@ -1,0 +1,204 @@
+{
+  "kind": "Group",
+  "instance": "МЕН-144",
+  "weeks": [
+    {
+      "id": 1,
+      "name": "1. Нечетная",
+      "current": false,
+      "parity": 1,
+      "days": [
+        {
+          "id": 1,
+          "date": "31.08.2026",
+          "name": "Понедельник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "date": "01.09.2026",
+          "name": "Вторник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": [
+                {
+                  "id": 7835202,
+                  "teacher": {
+                    "id": 3352,
+                    "name": "доц.Юрков А.А."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Управление результативностью",
+                  "group": "МЕН-144",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "*411"
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": [
+                {
+                  "id": 7835203,
+                  "teacher": {
+                    "id": 3718,
+                    "name": "доц.Погосян Р.Р."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Бизнес-планирование",
+                  "group": "МЕН-144",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "*409"
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": [
+                {
+                  "id": 7835204,
+                  "teacher": {
+                    "id": 3718,
+                    "name": "доц.Погосян Р.Р."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Финансирование проектов в бизнесе",
+                  "group": "МЕН-144",
+                  "kind": {
+                    "id": 2,
+                    "name": "Практика",
+                    "shortName": "пр."
+                  },
+                  "audience": "*210б"
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": [
+                {
+                  "id": 7835205,
+                  "teacher": {
+                    "id": 3657,
+                    "name": "доц.Салтанова Т.А."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Организация производства на предприятии",
+                  "group": "МЕН-144",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "*210б"
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

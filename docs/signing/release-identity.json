@@ -1,0 +1,5 @@
+{
+  "applicationId": "org.everis.app",
+  "algorithm": "RSA-4096",
+  "certificateSha256": "129d82464d947b00766e1cb6af0af6b201d7ba05c60e6830806a2bf345ec6978"
+}
