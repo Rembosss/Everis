@@ -47,3 +47,5 @@ Android 12 и новее. Единственная поддерживаемая 
 - [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
 
 Особая благодарность [@Gods_Mask](https://t.me/Gods_Mask) за предоставленную подписку Codex.
+
+Проект стал возможен благодаря донатерам, обилию кофеина, Codex и хорошей музыке.

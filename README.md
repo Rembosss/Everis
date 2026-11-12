@@ -47,3 +47,5 @@ Include your Everis version, Android version and steps to reproduce the problem.
 - [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
 
 Special thanks to [@Gods_Mask](https://t.me/Gods_Mask) for providing a Codex subscription.
+
+This project was made possible by donors, plenty of caffeine, Codex, and good music.
