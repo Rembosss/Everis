@@ -20,7 +20,6 @@
     <string name="groups_error">Could not load the group list. Check your connection and try again.</string>
     <string name="no_groups">No groups found</string>
     <string name="choose_hint">Select a group from the list</string>
-    <string name="source_caption">RSUE (RINH) · public timetable</string>
     <string name="loading_schedule">Loading timetable…</string>
     <string name="schedule_error">Could not update the timetable. Check your connection and try again.</string>
     <string name="unknown_day">No downloaded timetable for this date</string>
@@ -232,4 +231,23 @@
     <string name="haptics_caption">Feedback for your actions</string>
     <string name="performance_caption">Animations and visual effects</string>
     <string name="project_repository">GitHub repository</string>
+    <string name="university">University</string>
+    <string name="university_rsue">RSUE (RINH)</string>
+    <string name="university_dstu">DSTU</string>
+    <string name="university_source">%1$s · public timetable</string>
+    <string name="lesson_type_filter">Class type</string>
+    <string name="all_lesson_types">All types</string>
+    <string name="lesson_list_scroll_hint">Classes: %1$d · scroll to see more</string>
+    <string name="teacher_timetable">Teacher timetables</string>
+    <string name="teacher_name_hint">Teacher name</string>
+    <string name="teacher_search_help">Enter a teacher’s surname or full name.</string>
+    <string name="teacher_not_found">No matching teachers</string>
+    <string name="teacher_load_error">Could not load university data. Please retry.</string>
+    <string name="teacher_cached_directory">Showing the saved teacher directory.</string>
+    <string name="teacher_cached_schedule">Showing the saved timetable. Changes could not be checked.</string>
+    <string name="select_teacher">Choose a teacher</string>
+    <string name="no_published_lessons">No published classes for this day</string>
+    <string name="new_dock">New dock style</string>
+    <string name="new_dock_info">A compact floating dock above the content.</string>
+    <string name="section_root_action">Return to section home</string>
 </resources>

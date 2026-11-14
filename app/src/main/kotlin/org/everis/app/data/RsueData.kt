@@ -15,8 +15,13 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 
-data class StudentGroup(val id: String, val name: String)
-data class PublishedSchedule(val group: String, val days: Set<LocalDate>, val lessons: List<Lesson>) {
+data class StudentGroup(val id: String, val name: String, val university: String = "rsue") {
+    init {
+        require(university in setOf("rsue", "dstu"))
+        require(if (university == "dstu") id.matches(Regex("dstu:[1-9][0-9]{0,11}")) else !id.startsWith("dstu:"))
+    }
+}
+data class PublishedSchedule(val group: String, val days: Set<LocalDate>, val lessons: List<Lesson>, val university: String = "rsue") {
     fun forSubgroup(subgroup: String?) = if (subgroup.isNullOrBlank()) this else copy(lessons = lessons.forSubgroup(subgroup))
 }
 
@@ -37,6 +42,11 @@ class RsueData {
         error("Source unavailable")
     }
     fun groups(): List<StudentGroup> = parseGroups(fetch("schedule/search/"))
+    fun teachers(): List<TeacherRef> = parseTeachers(fetch("schedule/search/"))
+    fun teacherSchedule(teacher: TeacherRef): String {
+        val encoded = URLEncoder.encode(teacher.sourceName, "UTF-8").replace("+", "%20")
+        return fetch("schedule/lessons/$encoded/").also { parseSchedule(it, teacher.sourceName, "Teacher") }
+    }
     fun schedule(group: StudentGroup): String {
         val encoded = URLEncoder.encode(group.name, "UTF-8").replace("+", "%20")
         return fetch("schedule/lessons/$encoded/").also { parseSchedule(it, group.name) }
@@ -58,10 +68,23 @@ class RsueData {
             }.distinctBy { it.id }.sortedBy { it.name }.also { require(it.isNotEmpty()) }
         }
 
-        fun parseSchedule(raw: String, group: String): PublishedSchedule {
+        fun parseTeachers(raw: String): List<TeacherRef> {
+            validateJsonStructure(raw)
+            val rows = JSONArray(raw)
+            return (0 until rows.length()).map { rows.getJSONObject(it) }.mapNotNull { row ->
+                val name = row.optString("name").trim()
+                if (name.length in 3..180 && !groupPattern.matches(name) && !name.contains('№') &&
+                    name.any { it.isLetter() } && name.contains(Regex("[А-ЯЁA-Z]\\s*\\.")))
+                    TeacherRef(row.get("id").toString(), name, name, "rsue") else null
+            }.distinctBy { it.id }.sortedBy { it.name }
+        }
+
+        fun parseSchedule(raw: String, group: String, expectedKind: String = "Group"): PublishedSchedule {
             validateJsonStructure(raw)
             val root = JSONObject(raw)
-            require(root.getString("kind") == "Group" && root.getString("instance") == group)
+            require(root.getString("kind") == expectedKind && root.getString("instance") == group)
+            val source = root.optString("source", "rsue")
+            require(source == "rsue" || source == "dstu")
             val days = linkedSetOf<LocalDate>()
             val lessons = linkedMapOf<String, Lesson>()
             val weeks = root.getJSONArray("weeks")
@@ -88,7 +111,7 @@ class RsueData {
                             require(subject.isNotBlank() && subject.length <= 1000)
                             val kind = entry.optJSONObject("kind")?.optString("name").orEmpty().lowercase()
                             val audience = entry.optString("audience").takeUnless { it == "null" }.orEmpty()
-                            val building = when {
+                            val building = entry.optString("building").takeIf { it.isNotBlank() } ?: if (source != "rsue") null else when {
                                 '*' in audience -> "Островского, 62"
                                 '#' in audience -> "Горького, 166"
                                 '&' in audience -> "Тургеневская, 49"
@@ -100,21 +123,22 @@ class RsueData {
                                 "лаб" in kind -> LessonType.LABORATORY
                                 else -> LessonType.OTHER
                             }
-                            val id = "rsue:$group:$date:${entry.get("id")}:${pair.get("id")}"
+                            val id = "$source:$group:$date:${entry.get("id")}:${pair.get("id")}"
                             require(lessons.size < 50_000 || lessons.containsKey(id))
                             lessons[id] = Lesson(id, subject.lowercase(), subject,
                                 date.atTime(start).atZone(zone),
                                 (if (end <= start) date.plusDays(1) else date).atTime(end).atZone(zone),
                                 type, listOfNotNull(entry.optJSONObject("teacher")?.optString("name")?.takeIf { it.isNotBlank() }),
-                                building, audience.replace(Regex("[*#&]"), "").trim().ifEmpty { null },
+                                building, (if (source == "rsue") audience.replace(Regex("[*#&]"), "") else audience).trim().ifEmpty { null },
                                 subgroup = entry.optJSONObject("subgroup")?.takeIf { it.optInt("id") != 0 }
-                                    ?.optString("name")?.trim()?.takeIf { it.isNotBlank() && it != "null" })
+                                    ?.optString("name")?.trim()?.takeIf { it.isNotBlank() && it != "null" },
+                                studentGroups = if (expectedKind == "Teacher") listOfNotNull(entry.optString("group").takeIf { it.isNotBlank() }) else emptyList())
                         }
                     }
                 }
             }
-            require(days.isNotEmpty())
-            return PublishedSchedule(group, days, lessons.values.sortedBy { it.start })
+            require(days.isNotEmpty() || (source == "dstu" && root.optBoolean("empty")))
+            return PublishedSchedule(group, days, lessons.values.sortedBy { it.start }, source)
         }
     }
 }

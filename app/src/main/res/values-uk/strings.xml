@@ -20,7 +20,6 @@
     <string name="groups_error">Не вдалося завантажити список груп. Перевірте з’єднання та повторіть спробу.</string>
     <string name="no_groups">Групи не знайдено</string>
     <string name="choose_hint">Виберіть групу зі списку</string>
-    <string name="source_caption">РГЭУ (РИНХ) · публічний розклад</string>
     <string name="loading_schedule">Завантажуємо розклад…</string>
     <string name="schedule_error">Не вдалося оновити розклад. Перевірте з’єднання та повторіть спробу.</string>
     <string name="unknown_day">На цю дату немає завантаженого розкладу</string>
@@ -236,4 +235,23 @@
     <string name="haptics_caption">Відгук на дії</string>
     <string name="performance_caption">Анімації та важкі ефекти</string>
     <string name="project_repository">Репозиторій GitHub</string>
+    <string name="university">Заклад вищої освіти</string>
+    <string name="university_rsue">РДЕУ (РІНГ)</string>
+    <string name="university_dstu">ДДТУ</string>
+    <string name="university_source">%1$s · публічний розклад</string>
+    <string name="lesson_type_filter">Тип заняття</string>
+    <string name="all_lesson_types">Усі типи</string>
+    <string name="lesson_list_scroll_hint">Занять: %1$d · прокручуйте список</string>
+    <string name="teacher_timetable">Розклад викладачів</string>
+    <string name="teacher_name_hint">ПІБ викладача</string>
+    <string name="teacher_search_help">Введіть прізвище або повне ім’я викладача.</string>
+    <string name="teacher_not_found">Викладача не знайдено</string>
+    <string name="teacher_load_error">Не вдалося отримати дані закладу. Спробуйте ще раз.</string>
+    <string name="teacher_cached_directory">Показано збережений список викладачів.</string>
+    <string name="teacher_cached_schedule">Показано збережений розклад. Перевірити зміни не вдалося.</string>
+    <string name="select_teacher">Вибрати викладача</string>
+    <string name="no_published_lessons">На цей день немає опублікованих занять</string>
+    <string name="new_dock">Новий вигляд панелі</string>
+    <string name="new_dock_info">Компактна плаваюча панель поверх вмісту.</string>
+    <string name="section_root_action">На початок розділу</string>
 </resources>

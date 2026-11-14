@@ -20,7 +20,6 @@
     <string name="groups_error">Топтар тізімін жүктеу мүмкін болмады. Байланысты тексеріп, қайталап көріңіз.</string>
     <string name="no_groups">Топтар табылмады</string>
     <string name="choose_hint">Тізімнен топты таңдаңыз</string>
-    <string name="source_caption">РГЭУ (РИНХ) · ашық сабақ кестесі</string>
     <string name="loading_schedule">Кесте жүктелуде…</string>
     <string name="schedule_error">Кестені жаңарту мүмкін болмады. Байланысты тексеріп, қайталап көріңіз.</string>
     <string name="unknown_day">Бұл күнге жүктелген кесте жоқ</string>
@@ -232,4 +231,23 @@
     <string name="haptics_caption">Әрекеттерге жауап</string>
     <string name="performance_caption">Анимациялар және күрделі әсерлер</string>
     <string name="project_repository">GitHub репозиторийі</string>
+    <string name="university">ЖОО</string>
+    <string name="university_rsue">РМЭУ (РИНХ)</string>
+    <string name="university_dstu">ДМТУ</string>
+    <string name="university_source">%1$s · ашық сабақ кестесі</string>
+    <string name="lesson_type_filter">Сабақ түрі</string>
+    <string name="all_lesson_types">Барлық түрлері</string>
+    <string name="lesson_list_scroll_hint">Сабақ саны: %1$d · тізімді айналдырыңыз</string>
+    <string name="teacher_timetable">Оқытушылардың кестесі</string>
+    <string name="teacher_name_hint">Оқытушының аты-жөні</string>
+    <string name="teacher_search_help">Оқытушының тегін немесе толық аты-жөнін енгізіңіз.</string>
+    <string name="teacher_not_found">Оқытушы табылмады</string>
+    <string name="teacher_load_error">ЖОО деректерін алу мүмкін болмады. Қайталап көріңіз.</string>
+    <string name="teacher_cached_directory">Оқытушылардың сақталған тізімі көрсетілген.</string>
+    <string name="teacher_cached_schedule">Сақталған кесте көрсетілген. Өзгерістерді тексеру мүмкін болмады.</string>
+    <string name="select_teacher">Оқытушыны таңдау</string>
+    <string name="no_published_lessons">Бұл күнге жарияланған сабақтар жоқ</string>
+    <string name="new_dock">Панельдің жаңа көрінісі</string>
+    <string name="new_dock_info">Мазмұнның үстіндегі ықшам қалқымалы панель.</string>
+    <string name="section_root_action">Бөлімнің басына өту</string>
 </resources>

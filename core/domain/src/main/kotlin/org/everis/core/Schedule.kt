@@ -21,6 +21,7 @@ data class Lesson(
     val cancelled: Boolean = false,
     val onlineUrl: String? = null,
     val subgroup: String? = null,
+    val studentGroups: List<String> = emptyList(),
 ) {
     init {
         require(id.isNotBlank())

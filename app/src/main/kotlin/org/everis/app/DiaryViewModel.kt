@@ -33,6 +33,7 @@ data class DiaryState(
     val groups: List<StudentGroup> = emptyList(),
     val groupsLoading: Boolean = false,
     val groupsFailed: Boolean = false,
+    val catalogUniversity: String = "rsue",
     val group: StudentGroup? = null,
     val completed: Boolean = false,
     val acknowledged: Boolean = false,
@@ -47,6 +48,7 @@ data class DiaryState(
     val blackTheme: Boolean = false,
     val performanceMode: Boolean = false,
     val hapticsEnabled: Boolean = true,
+    val newDock: Boolean = true,
     val onlyMySubgroup: Boolean = false,
     val subgroup: String = "",
     val subgroups: List<String> = emptyList(),
@@ -65,6 +67,9 @@ data class DiaryState(
     val saveFailed: Boolean = false,
     val backgroundFailed: Boolean = false,
     val tasksForReview: List<ReviewTask> = emptyList(),
+    val disciplineCourses: List<Pair<String, String>> = emptyList(),
+    val disciplineLessons: Map<String, List<Lesson>> = emptyMap(),
+    val teacherNames: Map<String, String> = emptyMap(),
 )
 data class ReviewTask(val id: String, val subject: String, val text: String, val disciplineId: String)
 data class HomeworkRequest(val disciplineId: String, val subject: String, val after: Instant,
@@ -127,6 +132,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private var previewGroup: StudentGroup? = null
     private val context get() = getApplication<Application>()
     private val repository = DiaryRepository.get(application)
+    val teacherRepository = org.everis.app.data.TeacherRepository(application)
+    private var groupsJob: kotlinx.coroutines.Job? = null
+    private var catalogChosen = false
     private var writes = 0
     private var refreshing = false
     private var pendingRefreshGroup: StudentGroup? = null
@@ -138,6 +146,10 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private var cachedSchedule: PublishedSchedule? = null
     private var cachedSubgroup = ""
     private var cachedVisible: PublishedSchedule? = null
+    private var indexedSchedule: PublishedSchedule? = null
+    private var indexedCourses = emptyList<Pair<String, String>>()
+    private var indexedLessons = emptyMap<String, List<Lesson>>()
+    private var indexedTeachers = emptyList<String>()
 
     init {
         viewModelScope.launch {
@@ -148,7 +160,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                         val array = json.optJSONArray("groups") ?: JSONArray()
                         val groupsRaw = array.toString()
                         if (groupsRaw != cachedGroupsRaw) {
-                            cachedGroups = (0 until array.length()).map { i -> array.getJSONObject(i).let { StudentGroup(it.getString("id"), it.getString("name")) } }
+                            cachedGroups = (0 until array.length()).map { i -> studentGroup(array.getJSONObject(i)) }
                             cachedGroupsRaw = groupsRaw
                         }
                         val groups = cachedGroups
@@ -162,25 +174,43 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         val rawSchedule = json.optString("schedule")
                         val subgroup = json.visibleSubgroup()
-                        if (rawSchedule != cachedScheduleRaw || group?.name != cachedScheduleGroup) {
-                            cachedSchedule = rawSchedule.takeIf { it.isNotBlank() && group != null }?.let { RsueData.parseSchedule(it, group!!.name) }
-                            cachedScheduleRaw = rawSchedule; cachedScheduleGroup = group?.name
+                        if (rawSchedule != cachedScheduleRaw || group?.let { "${it.university}:${it.id}:${it.name}" } != cachedScheduleGroup) {
+                            cachedSchedule = rawSchedule.takeIf { it.isNotBlank() && group != null }?.let { parseStudentSchedule(it, group!!) }
+                            cachedScheduleRaw = rawSchedule; cachedScheduleGroup = group?.let { "${it.university}:${it.id}:${it.name}" }
                             cachedVisible = cachedSchedule?.forSubgroup(subgroup)
                             cachedSubgroup = subgroup
                         } else if (subgroup != cachedSubgroup) {
                             cachedVisible = cachedSchedule?.forSubgroup(subgroup); cachedSubgroup = subgroup
                         }
+                        val homework = json.homeworkEntries()
+                        val visible = cachedVisible
+                        val lessons = visible?.lessons.orEmpty()
+                        if (visible !== indexedSchedule || (visible == null && indexedLessons.isNotEmpty())) {
+                            indexedLessons = lessons.groupBy { disciplineKey(it.disciplineName) }
+                            indexedCourses = lessons.map { disciplineKey(it.disciplineName) to disciplineTitle(it.disciplineName) }.distinctBy { it.first }
+                            indexedTeachers = lessons.flatMap { it.teachers }.distinct()
+                            indexedSchedule = visible
+                        }
+                        val byDiscipline = indexedLessons
+                        val additionalCourses = (homework.map { it.subject } + tasksForReview.map { it.subject })
+                            .map { disciplineKey(it) to disciplineTitle(it) }
+                        val courses = (indexedCourses + additionalCourses).distinctBy { it.first }.sortedBy { it.second }
+                        val university = group?.university ?: "rsue"
+                        val names = indexedTeachers.associateWith { teacherRepository.fullName(it, university) }
                         DiaryState(loaded = true, groups = groups, group = group,
+                            disciplineCourses = courses, disciplineLessons = byDiscipline, teacherNames = names,
                             completed = json.optBoolean("completed") && group != null, acknowledged = json.optBoolean("betaAcknowledged"), permissionAsked = json.optBoolean("notificationPermissionAsked"),
                             schedule = cachedVisible, tasks = json.tasks(), completedTasks = json.completedTasks(),
                             palette = json.optString("palette", "dynamic"), themeMode = json.optString("themeMode", "system"),
                             blackTheme = json.optBoolean("blackTheme"), performanceMode = json.optBoolean("performanceMode"), hapticsEnabled = json.optBoolean("hapticsEnabled", true),
+                            newDock = json.optBoolean("newDock", true),
                             onlyMySubgroup = json.optBoolean("onlyMySubgroup"), subgroup = json.optString("subgroup"),
                             subgroups = cachedSchedule?.lessons.orEmpty().mapNotNull { it.subgroup }.distinct().sorted(),
-                            homework = json.homeworkEntries(), history = json.scheduleHistory(),
+                            homework = homework, history = json.scheduleHistory(),
                             notifications = notificationPreferences(json), tasksForReview = tasksForReview)
                     }
                     state = saved.copy(groupsLoading = state.groupsLoading, groupsFailed = state.groupsFailed,
+                        catalogUniversity = if (catalogChosen) state.catalogUniversity else saved.group?.university ?: "rsue",
                         scheduleLoading = state.scheduleLoading, scheduleFailed = state.scheduleFailed,
                         changingGroup = state.changingGroup, requestedDay = state.requestedDay,
                         languageRequest = state.languageRequest, homeworkRequest = state.homeworkRequest,
@@ -198,6 +228,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val saved = repository.read()
+                saved.selectedGroup()?.let { warmTeacherNames(it.university) }
                 Log.i("Everis", "Protected snapshot loaded")
                 // Silent preload begins on the welcome screen, independently from its animations.
                 if (!saved.optBoolean("completed")) loadGroups() else refreshSchedule(silent = saved.optString("schedule").isNotBlank())
@@ -210,21 +241,54 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun warmTeacherNames(university: String) {
+        if (university != "dstu") return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { runCatching { teacherRepository.refreshCatalog(university) } }
+            refreshTeacherNames()
+        }
+    }
+
+    fun refreshTeacherNames() {
+        val snapshot = state
+        viewModelScope.launch {
+            val names = withContext(Dispatchers.Default) {
+                snapshot.schedule?.lessons.orEmpty().flatMap { it.teachers }.distinct()
+                    .associateWith { teacherRepository.fullName(it, snapshot.group?.university ?: "rsue") }
+            }
+            if (state.group == snapshot.group && state.schedule === snapshot.schedule) state = state.copy(teacherNames = names)
+        }
+    }
+
+    fun selectUniversity(university: String) {
+        require(university in UniversitySources.universities)
+        if (state.catalogUniversity == university && state.groups.any { it.university == university }) return
+        catalogChosen = true
+        groupsJob?.cancel()
+        previewJob?.cancel(); previewRaw = null; previewGroup = null
+        state = state.copy(catalogUniversity = university, groupsLoading = false, groupsFailed = false,
+            previewGroupId = null, previewSubgroups = emptyList(), groupPreviewLoading = false, groupPreviewFailed = false)
+        loadGroups()
+    }
+
     fun loadGroups() {
         if (state.groupsLoading || state.storageFailed) return
+        val university = state.catalogUniversity
         state = state.copy(groupsLoading = true, groupsFailed = false)
-        viewModelScope.launch {
+        groupsJob = viewModelScope.launch {
             try {
-                val groups = withContext(Dispatchers.IO) { RsueData().groups() }
+                val groups = withContext(Dispatchers.IO) { UniversitySources.groups(university) }
                 repository.update { json ->
+                    val previous = json.optJSONArray("groups") ?: JSONArray()
+                    val retained = (0 until previous.length()).map { studentGroup(previous.getJSONObject(it)) }.filter { it.university != university }
                     val selected = json.selectedGroup()
-                    val directory = if (selected != null && groups.none { it.id == selected.id }) groups + selected else groups
-                    json.put("groups", JSONArray().apply { directory.forEach { put(JSONObject().put("id", it.id).put("name", it.name)) } })
+                    val directory = (retained + groups + listOfNotNull(selected)).distinctBy { it.id }
+                    json.put("groups", JSONArray().apply { directory.forEach { put(it.toJson()) } })
                 }
-                state = state.copy(groupsLoading = false)
-                Log.i("Everis", "Public directory loaded: ${groups.size} groups")
+                if (state.catalogUniversity == university) state = state.copy(groupsLoading = false)
+                Log.i("Everis", "Public $university directory loaded: ${groups.size} groups")
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { state = state.copy(groupsLoading = false, groupsFailed = true) }
+            catch (_: Exception) { if (state.catalogUniversity == university) state = state.copy(groupsLoading = false, groupsFailed = true) }
         }
     }
 
@@ -240,8 +304,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         state = state.copy(previewGroupId = group.id, previewSubgroups = emptyList(), groupPreviewLoading = true, groupPreviewFailed = false)
         previewJob = viewModelScope.launch {
             try {
-                val raw = withContext(Dispatchers.IO) { RsueData().schedule(group) }
-                val schedule = withContext(Dispatchers.Default) { RsueData.parseSchedule(raw, group.name) }
+                val raw = withContext(Dispatchers.IO) { UniversitySources.schedule(group) }
+                val schedule = withContext(Dispatchers.Default) { parseStudentSchedule(raw, group) }
                 if (previewGroup == group) {
                     previewRaw = raw
                     state = state.copy(previewSubgroups = schedule.lessons.mapNotNull { it.subgroup }.distinct().sorted(), groupPreviewLoading = false)
@@ -259,13 +323,13 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             if (json.selectedGroup() != group) {
                 val old = json.optString("schedule")
                 json.selectedGroup()?.let { previous ->
-                    if (old.isNotBlank()) rememberTaskMetadata(json, RsueData.parseSchedule(old, previous.name).lessons)
+                    if (old.isNotBlank()) rememberTaskMetadata(json, parseStudentSchedule(old, previous).lessons)
                 }
                 json.put("schedule", "").put("subgroup", "").put("onlyMySubgroup", false).put("changeCounter", 0).put("bedtimeReportedCounter", 0)
                 val preferences = notificationPreferences(json)
                 json.put("notifications", preferences.copy(generation = preferences.generation + 1).toJson())
             }
-            json.put("group", JSONObject().put("id", group.id).put("name", group.name))
+            json.put("group", group.toJson())
             json.put("subgroup", subgroup)
         }) {
             if (cached != null) repository.applySchedule(group, cached)
@@ -273,6 +337,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             state = state.copy(changingGroup = false, homeworkRequest = null)
             onSelected()
             if (changing && cached == null) refreshSchedule(group)
+            warmTeacherNames(group.university)
             configureNotifications(repository.read())
         }
     }
@@ -302,6 +367,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     }) }
     fun setBlackTheme(value: Boolean) = mutate({ it.put("blackTheme", value) })
     fun setHaptics(value: Boolean) = mutate({ it.put("hapticsEnabled", value) })
+    fun setNewDock(value: Boolean) = mutate({ it.put("newDock", value) })
     fun setPerformanceMode(value: Boolean) = mutate({ it.put("performanceMode", value) })
     fun setOnlyMySubgroup(value: Boolean) {
         require(!value || state.subgroup.isNotBlank())
@@ -341,7 +407,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun closeHomework() { if (!state.saving) state = state.copy(homeworkRequest = null) }
     fun homeworkSaved() { state = state.copy(homeworkRequest = null) }
-    fun changeGroup() { state = state.copy(changingGroup = true); loadGroups() }
+    fun changeGroup() { state = state.copy(changingGroup = true); selectUniversity(state.group?.university ?: "rsue"); loadGroups() }
     fun cancelGroupChange() { state = state.copy(changingGroup = false) }
     fun requestDay(day: LocalDate) { state = state.copy(requestedDay = day.toString()) }
     fun consumeDayRequest() { state = state.copy(requestedDay = null) }

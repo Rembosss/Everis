@@ -20,6 +20,7 @@ import org.everis.app.data.disciplineKey
 import org.everis.app.data.disciplineTitle
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import org.everis.core.*
@@ -33,20 +34,19 @@ fun DisciplinesScreen(diary: DiaryViewModel) {
     var expanded by rememberSaveable { mutableStateOf<String?>(null) }
     var homeworkOnly by rememberSaveable { mutableStateOf(false) }
     var selection by rememberSaveable { mutableStateOf(listOf<String>()) }
+    OnSectionReset { expanded = null; selection = emptyList(); homeworkOnly = false }
     val selected = remember(selection) { selection.toSet() }
     var lastSelectionCount by remember { mutableIntStateOf(0) }
     SideEffect { if (selected.isNotEmpty()) lastSelectionCount = selected.size }
-    val courses = remember(state.schedule, state.homework, state.tasksForReview) {
-        (state.schedule?.lessons.orEmpty().map { it.disciplineName } + state.homework.map { it.subject } + state.tasksForReview.map { it.subject })
-            .map { disciplineKey(it) to disciplineTitle(it) }.distinctBy { it.first }.sortedBy { it.second }
-    }
-    val byDiscipline = remember(state.schedule) { state.schedule?.lessons.orEmpty().groupBy { disciplineKey(it.disciplineName) } }
+    // Prepared with the repository snapshot on Dispatchers.Default, before entering this tab.
+    val courses = state.disciplineCourses
+    val byDiscipline = state.disciplineLessons
     val incomplete = remember(state.homework) { state.homework.filterNot { it.complete } }
     LaunchedEffect(incomplete) { val ids = incomplete.map { it.id }.toSet(); selection = selection.filter { it in ids } }
     val motion = MaterialTheme.motionScheme
     val efficient = LocalPerformanceMode.current
     val feedback = LocalEverisHaptics.current
-    BackHandler(expanded != null || selected.isNotEmpty()) { if (selected.isNotEmpty()) selection = emptyList() else expanded = null }
+    BackHandler(LocalScreenActive.current && (expanded != null || selected.isNotEmpty())) { if (selected.isNotEmpty()) selection = emptyList() else expanded = null }
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -58,7 +58,7 @@ fun DisciplinesScreen(diary: DiaryViewModel) {
                 }
             }
             AnimatedContent(homeworkOnly, modifier = Modifier.weight(1f), label = "discipline filter", transitionSpec = { screenTransition(if (targetState) 1 else -1, efficient) }) { showHomework ->
-                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (showHomework) {
                         if (incomplete.isEmpty()) item("empty-homework") { Text(stringResource(R.string.no_unfinished_tasks)) }
                         incomplete.groupBy { it.due.toLocalDate() }.forEach { (date, entries) ->
@@ -93,7 +93,7 @@ fun DisciplinesScreen(diary: DiaryViewModel) {
                 }
             }
         }
-        AnimatedVisibility(homeworkOnly && selected.isNotEmpty(), modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        AnimatedVisibility(homeworkOnly && selected.isNotEmpty(), modifier = Modifier.align(Alignment.BottomEnd).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 12.dp),
             enter = fadeIn(motion.defaultEffectsSpec()) + slideInVertically(motion.defaultSpatialSpec()) { it / 2 },
             exit = fadeOut(motion.fastEffectsSpec()) + slideOutVertically(motion.defaultSpatialSpec()) { it / 2 }) {
             ExtendedFloatingActionButton(onClick = { if (!state.saving && selected.isNotEmpty()) diary.completeTasks(selected) { selection = emptyList() } }) {
@@ -120,7 +120,7 @@ private fun DisciplineDetails(id: String, title: String, lessons: List<Lesson>, 
             if (subgroup.isNotBlank()) Text(stringResource(R.string.subgroup_teacher_heading, subgroup),
                 style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             subgroupLessons.groupBy { it.type }.forEach { (type, entries) ->
-                val teachers = entries.flatMap { it.teachers }.distinct()
+                val teachers = entries.flatMap { it.teachers }.map { diary.state.teacherNames[it] ?: it }.distinct()
                 if (teachers.isNotEmpty()) Text(stringResource(lessonTypeLabel(type)) + ": " + teachers.joinToString(", "), style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -145,17 +145,33 @@ private fun DisciplineDetails(id: String, title: String, lessons: List<Lesson>, 
             }
         }
         Text(stringResource(R.string.lessons_list), style = MaterialTheme.typography.titleSmall)
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 320.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.lesson_list_scroll_hint, lessons.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val lessonScroll = androidx.compose.foundation.lazy.rememberLazyListState()
+        val indicator = MaterialTheme.colorScheme.primary.copy(alpha = .65f)
+        Box(Modifier.fillMaxWidth().heightIn(max = 320.dp).drawWithContent {
+            drawContent()
+            val info = lessonScroll.layoutInfo
+            if (info.totalItemsCount > 0 && (lessonScroll.canScrollForward || lessonScroll.canScrollBackward)) {
+                val track = size.height
+                val thumb = (track * info.visibleItemsInfo.size / info.totalItemsCount).coerceIn(24.dp.toPx(), track)
+                val first = info.visibleItemsInfo.firstOrNull()
+                val fraction = if (first == null) 0f else (first.index + lessonScroll.firstVisibleItemScrollOffset.toFloat() / first.size.coerceAtLeast(1)) / info.totalItemsCount
+                drawRoundRect(indicator.copy(alpha = .12f), androidx.compose.ui.geometry.Offset(size.width - 4.dp.toPx(), 0f), androidx.compose.ui.geometry.Size(4.dp.toPx(), track), androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()))
+                drawRoundRect(indicator, androidx.compose.ui.geometry.Offset(size.width - 4.dp.toPx(), (track * fraction).coerceIn(0f, track - thumb)), androidx.compose.ui.geometry.Size(4.dp.toPx(), thumb), androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()))
+            }
+        }) {
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 320.dp).padding(end = 10.dp), state = lessonScroll, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(lessons, key = { it.id }) { lesson ->
                 Surface(onClick = { diary.requestDay(lesson.start.toLocalDate()) }, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainer) {
                     Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(lesson.start.format(DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm", locale)) + "–" + lesson.end.toLocalTime(), style = MaterialTheme.typography.labelLarge)
                         Text(stringResource(lessonTypeLabel(lesson.type)), style = MaterialTheme.typography.bodySmall)
-                        Text(lesson.teachers.joinToString(", "), style = MaterialTheme.typography.bodySmall)
+                        Text(lesson.teachers.map { diary.state.teacherNames[it] ?: it }.distinct().joinToString(", "), style = MaterialTheme.typography.bodySmall)
                         Text(listOfNotNull(lesson.building, lesson.room, lesson.subgroup).joinToString(" · "), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
+        }
         }
     }
 }

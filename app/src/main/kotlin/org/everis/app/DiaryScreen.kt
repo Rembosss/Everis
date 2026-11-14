@@ -15,12 +15,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Image
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.*
@@ -35,7 +29,6 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -45,6 +38,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import org.everis.app.notifications.EverisNotifications
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun DiaryApp(diary: DiaryViewModel) {
@@ -67,36 +62,22 @@ fun DiaryApp(diary: DiaryViewModel) {
             frozenProcessingText = diary.languageOverlayText ?: processingText
         }
     }
-    val contentLayer = rememberGraphicsLayer()
-    var localeSnapshot by remember { mutableStateOf<ImageBitmap?>(null) }
-    val snapshotOpacity = remember { androidx.compose.animation.core.Animatable(1f) }
-    var localeApplying by remember { mutableStateOf(false) }
+    val currentLanguage by rememberUpdatedState(uiLocale(LocalConfiguration.current).language)
     val blur = animateFloatAsState(if (!efficient && (modalHost.count > 0 || processing)) 9f else 0f,
         tween(320), label = "modal backdrop")
     val density = LocalDensity.current.density
     LaunchedEffect(diary.state.languageRequest) {
         val code = diary.state.languageRequest ?: return@LaunchedEffect
         val animate = ValueAnimator.areAnimatorsEnabled()
-        diary.freezeLanguageMessage(frozenProcessingText)
-        try {
-            if (!efficient && animate) {
-                snapshotOpacity.snapTo(1f)
-                // Record only the frames used for this transition, not every normal app frame.
-                withFrameNanos { }; withFrameNanos { }
-                localeSnapshot = try { contentLayer.toImageBitmap() } catch (_: Exception) { null }
-            }
-            if (animate) delay(if (efficient) 150 else 280)
-            localeApplying = true
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(code))
-            withFrameNanos { }; withFrameNanos { }
-            if (animate) delay(160)
-            localeApplying = false
-            if (localeSnapshot != null && animate) snapshotOpacity.animateTo(0f, tween(240))
-            diary.finishLanguageChange()
-        } finally {
-            localeSnapshot = null
-            localeApplying = false
-        }
+        diary.freezeLanguageMessage(processingText)
+        // Keep the live composition on screen. A first-use GPU bitmap capture could be empty,
+        // and its opaque fallback hid the entire UI during the first language change.
+        if (animate) delay(if (efficient) 180 else 360)
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(code))
+        withTimeoutOrNull(1500) { snapshotFlow { currentLanguage }.first { it == code } }
+        withFrameNanos { }; withFrameNanos { }
+        if (animate) delay(160)
+        diary.finishLanguageChange()
     }
     CompositionLocalProvider(LocalModalHost provides modalHost) {
       BackupHost(diary) {
@@ -106,15 +87,11 @@ fun DiaryApp(diary: DiaryViewModel) {
                 val radius = blur.value * density
                 renderEffect = if (!efficient && radius > 0.1f) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP).asComposeRenderEffect() else null
             }) {
-                Box(Modifier.fillMaxSize().drawWithContent {
-                    if (efficient || !languageChanging) drawContent()
-                    else { contentLayer.record { this@drawWithContent.drawContent() }; drawLayer(contentLayer) }
-                }) { DiaryAppContent(diary) }
-                localeSnapshot?.let { frozen -> Image(frozen, null, Modifier.fillMaxSize().graphicsLayer { alpha = snapshotOpacity.value }, contentScale = ContentScale.FillBounds) }
+                DiaryAppContent(diary)
             }
             AnimatedVisibility(processing, enter = fadeIn(tween(180)), exit = fadeOut(tween(240)), modifier = Modifier.fillMaxSize()) {
                 val interaction = remember { MutableInteractionSource() }
-                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = if (languageChanging && (efficient || localeSnapshot == null) && localeApplying) 1f else .12f))
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = .12f))
                     .clickable(interactionSource = interaction, indication = null) { }, contentAlignment = Alignment.Center) {
                 Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
                     Row(Modifier.padding(24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -156,7 +133,7 @@ private fun DiaryAppContent(diary: DiaryViewModel) {
             AnimatedContent(state.completed, modifier = Modifier.fillMaxSize(), label = "setup to diary", transitionSpec = {
                 screenTransition(efficient = state.performanceMode)
             }) { complete -> if (complete) MainScreens(diary) else SetupScreens(diary) }
-            if (state.completed && !state.acknowledged) EverisAlertDialog(onDismissRequest = {},
+            if (state.completed && !state.acknowledged) EverisAlertDialog(onDismissRequest = diary::acknowledge,
                 title = { Text(stringResource(R.string.prototype_title), fontWeight = FontWeight.Bold) },
                 text = { Text(stringResource(R.string.prototype_body), Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) },
                 confirmButton = { EverisTextButton(onClick = diary::acknowledge) { Text(stringResource(R.string.ok)) } })
@@ -173,48 +150,56 @@ private fun MainScreens(diary: DiaryViewModel) {
     var selection by rememberSaveable(stateSaver = androidx.compose.runtime.saveable.Saver<TabSelection, Any>(
         save = { it.index }, restore = { TabSelection(restoreSelectedTab(it)) })) { mutableStateOf(TabSelection(0)) }
     val tab = selection.index
+    var sectionResets by rememberSaveable { mutableStateOf(intArrayOf(0, 0, 0, 0)) }
+    val newDock = diary.state.newDock
+    BackHandler(enabled = tab != 0) { selection = selection.select(0) }
     val feedback = LocalEverisHaptics.current
     val holder = rememberSaveableStateHolder()
-    val compactLabels = LocalConfiguration.current.fontScale > 1.4f && with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() < 600.dp }
-    LaunchedEffect(diary.state.requestedDay) { if (diary.state.requestedDay != null) selection = selection.select(0) }
-    Scaffold(modifier = Modifier.imePadding(), contentWindowInsets = WindowInsets.safeDrawing,
-        bottomBar = {
-            NavigationBar {
-                val tabs = listOf(R.string.home to R.drawable.ic_home, R.string.disciplines to R.drawable.ic_disciplines,
-                    R.string.timetable to R.drawable.ic_calendar_agenda, R.string.settings to R.drawable.ic_settings)
-                tabs.forEachIndexed { index, (label, icon) ->
-                    val interaction = remember(index) { MutableInteractionSource() }
-                    NavigationBarItem(selected = tab == index, onClick = { if (tab != index) { feedback?.select(); selection = selection.select(index) } },
-                        interactionSource = interaction,
-                        icon = { Icon(painterResource(icon), stringResource(label), Modifier.pressFeedback(interaction)) },
-                        label = if (compactLabels) null else ({ Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall) }))
-                }
-            }
-        }) { insets ->
-        Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = 960.dp).fillMaxSize()) {
-            if (diary.state.saveFailed) Surface(color = MaterialTheme.colorScheme.errorContainer) {
-                Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(stringResource(R.string.save_error))
-                    EverisTextButton(onClick = diary::clearSaveError) { Text(stringResource(R.string.ok)) }
-                }
-            }
-            AnimatedContent(targetState = selection,
-                modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds().background(MaterialTheme.colorScheme.background),
-                contentKey = { it.index }, label = "main tab",
-                transitionSpec = { screenTransition(targetState.direction, diary.state.performanceMode) }) { current ->
-                holder.SaveableStateProvider(current.index) {
-                  Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    when (current.index) {
-                        0 -> DailySchedule(diary)
-                        1 -> DisciplinesScreen(diary)
-                        2 -> CalendarScreen(diary)
-                        else -> SettingsScreen(diary)
+    val density = LocalDensity.current
+    val clearance = if (newDock) 74.dp + with(density) { WindowInsets.navigationBars.getBottom(this).toDp() } else 0.dp
+    val selectTab: (Int) -> Unit = { index ->
+        if (selection.index != index) { feedback?.select(); selection = selection.select(index) }
+    }
+    val resetSection: (Int) -> Unit = { index ->
+        if (index == selection.index) { feedback?.confirm(); sectionResets = sectionResets.copyOf().also { it[index]++ } }
+    }
+    val requestedDay = diary.state.requestedDay
+    LaunchedEffect(requestedDay) { if (requestedDay != null) selection = selection.select(0) }
+    CompositionLocalProvider(LocalNavigationClearance provides clearance) {
+        Box(Modifier.fillMaxSize().imePadding()) {
+            // Navigation is an overlay, not a bottomBar: lists continue behind the capsule.
+            Scaffold(modifier = Modifier.fillMaxSize(),
+                contentWindowInsets = if (newDock) WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal) else WindowInsets.safeDrawing,
+                bottomBar = { if (!newDock) ClassicNavigation(tab, selectTab, resetSection) }) { insets ->
+                Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.TopCenter) {
+                    Column(Modifier.widthIn(max = 960.dp).fillMaxSize()) {
+                        if (diary.state.saveFailed) Surface(color = MaterialTheme.colorScheme.errorContainer) {
+                            Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                Text(stringResource(R.string.save_error))
+                                EverisTextButton(onClick = diary::clearSaveError) { Text(stringResource(R.string.ok)) }
+                            }
+                        }
+                        AnimatedContent(targetState = selection,
+                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds().background(MaterialTheme.colorScheme.background),
+                            contentKey = { it.index }, label = "main tab",
+                            transitionSpec = { screenTransition(targetState.direction, diary.state.performanceMode) }) { current ->
+                            holder.SaveableStateProvider(current.index) {
+                                CompositionLocalProvider(LocalScreenActive provides (current.index == tab), LocalSectionReset provides sectionResets[current.index]) {
+                                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                                        when (current.index) {
+                                            0 -> DailySchedule(diary)
+                                            1 -> DisciplinesScreen(diary)
+                                            2 -> TimetableScreen(diary)
+                                            else -> SettingsScreen(diary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                  }
                 }
-                }
-        }
+            }
+            if (newDock) FloatingNavigation(tab, selectTab, resetSection, Modifier.align(Alignment.BottomCenter))
         }
     }
 }

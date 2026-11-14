@@ -1,5 +1,26 @@
 package org.everis.app
 
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.unit.dp
+
+/** Outgoing AnimatedContent must not intercept Back for a screen that is no longer selected. */
+val LocalScreenActive = staticCompositionLocalOf { true }
+val LocalNavigationClearance = staticCompositionLocalOf { 108.dp }
+val LocalSectionReset = staticCompositionLocalOf { 0 }
+
+/** Per-section request survives tab disposal without resetting a different tab on its next visit. */
+@Composable
+fun OnSectionReset(onReset: () -> Unit) {
+    val request = LocalSectionReset.current
+    val active = LocalScreenActive.current
+    var handled by rememberSaveable { mutableIntStateOf(request) }
+    val action by rememberUpdatedState(onReset)
+    LaunchedEffect(request, active) {
+        if (active && request != handled) { handled = request; action() }
+    }
+}
+
 data class TabSelection(val index: Int, val direction: Int = 1) {
     fun select(target: Int): TabSelection {
         require(target in 0..3)

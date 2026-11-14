@@ -1,6 +1,9 @@
 package org.everis.app
 
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.stringResource
@@ -16,8 +19,10 @@ fun GroupChangeDialog(diary: DiaryViewModel) {
     LaunchedEffect(selected?.id) { selected?.let(diary::previewGroup) }
     EverisAlertDialog(onDismissRequest = { if (!state.saving) diary.cancelGroupChange() },
         title = { Text(stringResource(R.string.change_group)) },
-        text = { GroupSearch(query, selected, state, { query = it; selectedId = null },
-            { query = it.name; selectedId = it.id; subgroup = "" }, diary::loadGroups, subgroup, { subgroup = it }) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            UniversitySelector(diary) { query = ""; selectedId = null; subgroup = "" }
+            GroupSearch(query, selected, state, { query = it; selectedId = null },
+            { query = it.name; selectedId = it.id; subgroup = "" }, diary::loadGroups, subgroup, { subgroup = it }) } },
         confirmButton = {
             EverisTextButton(onClick = { selected?.let { diary.chooseGroup(it, subgroup) } },
                 enabled = selected != null && selected != state.group && !state.saving && !state.groupPreviewLoading &&

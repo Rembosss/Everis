@@ -4,7 +4,7 @@
 
 An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
-**[0.1-beta is available](https://github.com/Rembos1k/Everis/releases/tag/0.1-beta).** This early beta is intended for testing and feedback.
+**Current version: 0.2-beta (build 10).** See [release notes](docs/CHANGELOG.md). This beta is intended for testing and feedback. The repository currently remains private.
 
 ## Features
 
@@ -12,12 +12,14 @@ An independent Android university diary with offline timetables, homework and lo
 - Day, week and month views, subgroup filtering, class and break totals.
 - Homework for the next class, a task list and reminders.
 - Disciplines with teachers and study load statistics.
+- Teacher timetable search within the selected university.
+- Compact floating navigation, a classic navigation option, and a long press to return to a section’s main screen.
 - Periodic and evening schedule change checks.
 - Offline schedule sharing and local JSON backups.
 - Light, dark and black themes, Monet dynamic colors and custom accents.
 - Russian, Ukrainian, Belarusian, Kazakh and English interfaces.
 
-The current adapter supports the public timetable of Rostov State University of Economics (RSUE/RINH). Other universities are planned. Everis is an independent project and is not an official university app or service.
+Public timetable adapters support Rostov State University of Economics (RSUE/RINH) and Don State Technical University (DSTU). Other universities are planned. Everis is an independent project and is not an official university app or service.
 
 ## Privacy
 
@@ -27,7 +29,7 @@ Timetables, homework and preferences are stored on your device. Everis has no ap
 
 Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-Download the signed **[ARM64 Release APK](https://github.com/Rembos1k/Everis/releases/download/0.1-beta/Everis-0.1-beta-arm64-v8a-release.apk)** from [Releases](https://github.com/Rembos1k/Everis/releases). Package: `org.everis.app`. Android requires user confirmation to install updates.
+Download signed ARM64 APKs from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta): [Release](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) or [Debug](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-debug.apk). Repository access is currently required. Package: `org.everis.app` (Debug: `org.everis.app.debug`). Android requires user confirmation to install updates.
 
 ## Build from source
 
@@ -37,13 +39,13 @@ See [Development](docs/DEVELOPMENT.md) for the pinned toolchain, build commands 
 
 - [Project Telegram channel](https://t.me/EverisProject)
 - [Developer: Rembos1k](https://t.me/Rembos1k)
-- [Report an issue](https://github.com/Rembos1k/Everis/issues)
+- [Report an issue](https://github.com/Rembosss/Everis/issues)
 
 Include your Everis version, Android version and steps to reproduce the problem. Do not publish personal homework, backups or private logs.
 
 ## Developers
 
-- [Rembos1k](https://github.com/Rembos1k)
+- [Rembos1k](https://github.com/Rembosss)
 - [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
 
 Special thanks to [@Gods_Mask](https://t.me/Gods_Mask) for providing a Codex subscription.

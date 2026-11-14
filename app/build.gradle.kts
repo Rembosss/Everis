@@ -29,9 +29,9 @@ android {
             providers.gradleProperty("diaryQaApplicationId").getOrElse("org.everis.qa.pre01") else "org.everis.app"
         minSdk = 31
         targetSdk = 37
-        versionCode = 8
-        versionName = "0.1-beta"
-        buildConfigField("String", "UPDATE_REPOSITORY", "\"Rembos1k/Everis\"")
+        versionCode = 10
+        versionName = "0.2-beta"
+        buildConfigField("String", "UPDATE_REPOSITORY", "\"Rembosss/Everis\"")
     }
 
     signingConfigs {

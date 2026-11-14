@@ -1,0 +1,31 @@
+{
+  "data": [
+    {
+      "name": "AMCE11",
+      "id": 71397,
+      "kurs": 1,
+      "facul": "Маг Соц",
+      "yearName": "2026-2027",
+      "facultyID": 59
+    },
+    {
+      "name": "AMCE21",
+      "id": 75827,
+      "kurs": 2,
+      "facul": "Маг Соц",
+      "yearName": "2026-2027",
+      "facultyID": 59
+    },
+    {
+      "name": "AMITS11",
+      "id": 71789,
+      "kurs": 1,
+      "facul": "Маг Соц",
+      "yearName": "2026-2027",
+      "facultyID": 59
+    }
+  ],
+  "state": 1,
+  "msg": "Список групп",
+  "time": 1.0
+}

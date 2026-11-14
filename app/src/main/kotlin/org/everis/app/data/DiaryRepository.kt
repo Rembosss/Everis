@@ -47,12 +47,12 @@ class DiaryRepository private constructor(context: Context) {
     }
 
     suspend fun applySchedule(group: StudentGroup, raw: String): RefreshOutcome {
-        val incoming = withContext(Dispatchers.Default) { RsueData.parseSchedule(raw, group.name) }
+        val incoming = withContext(Dispatchers.Default) { parseStudentSchedule(raw, group) }
         var outcome = RefreshOutcome.STALE
         update { json ->
             if (json.selectedGroup() != group) return@update
             val oldRaw = json.optString("schedule")
-            val previous = oldRaw.takeIf { it.isNotBlank() }?.let { RsueData.parseSchedule(it, group.name) }
+            val previous = oldRaw.takeIf { it.isNotBlank() }?.let { parseStudentSchedule(it, group) }
             val subgroup = json.visibleSubgroup()
             val changed = previous != null && publishedScheduleChanged(previous.lessons.forSubgroup(subgroup), incoming.lessons.forSubgroup(subgroup), incoming.days)
             outcome = if (previous == null) RefreshOutcome.INITIAL else if (changed) RefreshOutcome.CHANGED else RefreshOutcome.UNCHANGED
@@ -78,7 +78,7 @@ class DiaryRepository private constructor(context: Context) {
 
     suspend fun refresh(group: StudentGroup): RefreshOutcome = refreshMutex.withLock {
         if (read().selectedGroup() != group) return@withLock RefreshOutcome.STALE
-        val raw = withContext(Dispatchers.IO) { RsueData().schedule(group) }
+        val raw = withContext(Dispatchers.IO) { UniversitySources.schedule(group) }
         applySchedule(group, raw)
     }
 
@@ -108,7 +108,7 @@ fun NotificationPreferences.toJson(): JSONObject = JSONObject()
     .put("homeworkTime", homeworkTime.toString()).put("daysAhead", daysAhead).put("dailyHomework", dailyHomework)
     .put("onDueDay", onDueDay).put("generation", generation)
 
-fun JSONObject.selectedGroup(): StudentGroup? = optJSONObject("group")?.let { StudentGroup(it.getString("id"), it.getString("name")) }
+fun JSONObject.selectedGroup(): StudentGroup? = optJSONObject("group")?.let(::studentGroup)
 fun JSONObject.tasks(): Map<String, String> = (optJSONObject("tasks") ?: JSONObject()).let { obj -> obj.keys().asSequence().associateWith { obj.getString(it) } }
 fun JSONObject.completedTasks(): Set<String> = (optJSONArray("completedTasks") ?: JSONArray()).let { a -> (0 until a.length()).map { a.getString(it) }.toSet() }
 fun JSONObject.visibleSubgroup(): String = if (optBoolean("onlyMySubgroup")) optString("subgroup") else ""

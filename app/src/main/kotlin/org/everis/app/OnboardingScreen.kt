@@ -2,6 +2,8 @@
 
 package org.everis.app
 
+import androidx.activity.compose.BackHandler
+
 import android.animation.ValueAnimator
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
@@ -58,6 +60,7 @@ fun SetupScreens(diary: DiaryViewModel) {
     var selectedId by rememberSaveable { mutableStateOf(state.group?.id) }
     var subgroup by rememberSaveable { mutableStateOf(state.subgroup) }
     val selected = state.groups.firstOrNull { it.id == selectedId && it.name == query }
+    BackHandler(enabled = page > 0) { if (!state.saving) page-- }
     LaunchedEffect(selected?.id) { selected?.let(diary::previewGroup) }
     LaunchedEffect(diary.importedSetup) {
         diary.importedSetup?.let { imported ->
@@ -89,6 +92,7 @@ fun SetupScreens(diary: DiaryViewModel) {
                 when (step) {
                     0 -> LanguageButton(Modifier.fillMaxWidth(), diary::setLanguage)
                     1 -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        UniversitySelector(diary) { query = ""; selectedId = null; subgroup = "" }
                         GroupSearch(query, selected, state,
                             onQuery = { query = it; selectedId = null; subgroup = "" },
                             onSelect = { query = it.name; selectedId = it.id; subgroup = "" }, onRetry = diary::loadGroups,
@@ -175,32 +179,40 @@ internal fun GroupSearch(
 ) {
     var expanded by rememberSaveable { mutableStateOf(query.isNotBlank() && selected == null) }
     val focus = LocalFocusManager.current
-    val search by produceState("" to emptyList<StudentGroup>(), query, state.groups) {
+    val search by produceState("" to emptyList<StudentGroup>(), query, state.groups, state.catalogUniversity) {
         if (query.isBlank()) { value = query to emptyList(); return@produceState }
         delay(100)
         value = query to withContext(Dispatchers.Default) {
-            state.groups.filter { it.name.contains(query.trim(), ignoreCase = true) }
+            state.groups.filter { it.university == state.catalogUniversity && it.name.contains(query.trim(), ignoreCase = true) }
                 .sortedBy { !it.name.startsWith(query.trim(), ignoreCase = true) }.take(15)
         }
     }
-    val suggestions = if (search.first == query) search.second else emptyList()
+    // Retain matching rows while the next search is being prepared. Never collapse the menu
+    // between keystrokes: it would resize/recenter the containing dialog on every character.
+    val suggestions = search.second.filter { it.university == state.catalogUniversity && it.name.contains(query.trim(), ignoreCase = true) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(value = query, onValueChange = { expanded = it.isNotBlank(); onQuery(it.take(80)) }, singleLine = true,
                 placeholder = { Text(stringResource(R.string.group_number)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
-        AnimatedVisibility(expanded && query.isNotBlank() && selected == null && suggestions.isNotEmpty(),
+        AnimatedVisibility(expanded && query.isNotBlank() && selected == null,
             enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
             Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 210.dp), contentPadding = PaddingValues(vertical = 6.dp)) {
+                LazyColumn(Modifier.fillMaxWidth().height(210.dp), contentPadding = PaddingValues(vertical = 6.dp)) {
+                    if (suggestions.isEmpty()) item("search-state") {
+                        Box(Modifier.fillMaxWidth().height(190.dp).padding(16.dp), contentAlignment = Alignment.Center) {
+                            if (search.first != query || state.groupsLoading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                            else Text(stringResource(if (state.groupsFailed) R.string.groups_error else R.string.no_groups), style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
                     items(suggestions, key = { it.id }) { group ->
                         DropdownMenuItem(text = { Text(group.name) }, onClick = { expanded = false; onSelect(group); focus.clearFocus() })
                     }
                 }
             }
         }
-        Text(stringResource(R.string.source_caption), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.university_source, universityName(state.catalogUniversity)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         AnimatedVisibility(selected != null && state.previewGroupId == selected.id && state.previewSubgroups.isNotEmpty(),
             enter = expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -218,7 +230,6 @@ internal fun GroupSearch(
                 Text(stringResource(R.string.groups_error), style = MaterialTheme.typography.bodySmall)
                 EverisTextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
             }
-            query.isNotBlank() && search.first == query && suggestions.isEmpty() -> Text(stringResource(R.string.no_groups), style = MaterialTheme.typography.bodySmall)
             selected == null -> Text(stringResource(R.string.choose_hint), style = MaterialTheme.typography.bodySmall)
         }
     }

@@ -84,6 +84,7 @@ fun DailySchedule(diary: DiaryViewModel) {
     }
     fun navigateDate(day: LocalDate) { navigate(CENTER_DAY + ChronoUnit.DAYS.between(base, day).toInt()) }
     fun switchWeek(offset: Long) { navigateDate(weekStart(base.plusDays((navigationTarget - CENTER_DAY).toLong())).plusWeeks(offset)) }
+    OnSectionReset { if (!state.saving) { editingId = null; navigateDate(today) } }
     LaunchedEffect(pager.settledPage) {
         navigationTarget = pager.settledPage
         if (pager.settledPage != lastSettledPage) { editingId = null; lastSettledPage = pager.settledPage }
@@ -105,7 +106,7 @@ fun DailySchedule(diary: DiaryViewModel) {
             navigate(CENTER_DAY + offset.toInt())
         }
     }
-    BackHandler(editingId != null) { if (!state.saving) { editingId = null } }
+    BackHandler(LocalScreenActive.current && editingId != null) { if (!state.saving) { editingId = null } }
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().then(if (tinyWindow) Modifier.verticalScroll(compactScroll) else Modifier)) {
         AnimatedVisibility(true,
@@ -186,7 +187,7 @@ fun DailySchedule(diary: DiaryViewModel) {
         exit = fadeOut(motion.defaultEffectsSpec()) + slideOutVertically(motion.defaultSpatialSpec()) { it / 12 }) {
         val lesson = allLessons.firstOrNull { it.id == editingId } ?: lastEditedLesson
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            if (lesson != null) LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            if (lesson != null) LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 item("lesson") { LessonCard(lesson, originalText, lesson.id in state.completedTasks, editing = true,
                     active = lesson.start.toLocalDate() == today && Instant.now() >= lesson.start.toInstant() && Instant.now() < lesson.end.toInstant(),
                     onNext = {}, onEdit = {}, onComplete = { diary.completeTask(lesson.id, it) }) }
@@ -211,7 +212,7 @@ fun DailySchedule(diary: DiaryViewModel) {
             }
         }
     }
-    AnimatedVisibility(selectedDay != today && editingId == null, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+    AnimatedVisibility(selectedDay != today && editingId == null, modifier = Modifier.align(Alignment.BottomEnd).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 12.dp),
         enter = fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec(), initialScale = .88f),
         exit = fadeOut(motion.fastEffectsSpec()) + scaleOut(motion.fastSpatialSpec(), targetScale = .88f)) {
         ExtendedFloatingActionButton(onClick = { navigateDate(today) }) { Text(stringResource(R.string.today)) }
@@ -262,7 +263,7 @@ private fun DayPage(day: LocalDate, lessons: List<Lesson>, confirmed: Boolean, d
             }
         }
     } else LazyColumn(state = listState, modifier = Modifier.fillMaxSize().immediateListEdge(listState), overscrollEffect = null,
-        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 88.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.scheduleLoading && lessons.isEmpty()) item("loading") { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(stringResource(R.string.loading_schedule), style = MaterialTheme.typography.bodySmall) }
         if (state.scheduleFailed) item("error") { Text(stringResource(R.string.schedule_error), color = MaterialTheme.colorScheme.error) }
         items(lessons, key = { it.id }) { lesson ->
@@ -322,7 +323,7 @@ private fun LessonCard(lesson: Lesson, task: String, complete: Boolean, editing:
 
 /** Only this small component observes seconds; the pager, cards and summaries do not. */
 @Composable
-private fun LiveStatus(lessons: List<Lesson>, publishedDays: Set<LocalDate>) {
+internal fun LiveStatus(lessons: List<Lesson>, publishedDays: Set<LocalDate>) {
     val now by rememberLiveInstant()
     val today = now.atZone(RsueData.zone).toLocalDate()
     val todayLessons = remember(today, lessons) { lessonsForDay(today, RsueData.zone, lessons) }

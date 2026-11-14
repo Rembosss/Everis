@@ -89,7 +89,7 @@ fun CalendarScreen(diary: DiaryViewModel) {
             val complete = remember(range, allLessons, published) { days.all { dayCoverage(it, published, allLessons, RsueData.zone).complete } }
             val summary = remember(range, allLessons, published) { summarizePeriod(range, RsueData.zone, allLessons, Coverage(range.first, range.last, complete)) }
             val listState = rememberLazyListState()
-            LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).immediateListEdge(listState), state = listState, overscrollEffect = null, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).immediateListEdge(listState), state = listState, overscrollEffect = null, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = LocalNavigationClearance.current + 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item("period-totals") {
                     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

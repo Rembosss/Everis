@@ -30,7 +30,7 @@ fun applyHomeworkWrite(json: JSONObject, write: HomeworkWrite) {
         if (target != null) {
             val group = requireNotNull(json.selectedGroup())
             require(target.disciplineId == write.disciplineId)
-            require(RsueData.parseSchedule(json.getString("schedule"), group.name).lessons.any {
+            require(parseStudentSchedule(json.getString("schedule"), group).lessons.any {
                 it.id == target.id && it.disciplineId == target.disciplineId && it.disciplineName == target.disciplineName && !it.cancelled
             }) { "The target lesson is no longer available" }
         }

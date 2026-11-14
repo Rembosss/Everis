@@ -56,16 +56,17 @@ fun AboutScreen(diary: DiaryViewModel, onBack: () -> Unit) {
             val missing = withContext(Dispatchers.IO) {
                 val result = org.everis.sources.PublicHttpClient(setOf("api.github.com"), maxBytes = 64 * 1024,
                     connectTimeoutMillis = 5000, readTimeoutMillis = 5000)
-                    .get(java.net.URI("https://api.github.com/users/Rembos1k"))
+                    .get(java.net.URI("https://api.github.com/users/Rembosss"))
                 result is org.everis.sources.HttpResult.Failure && result.statusCode == 404
             }
-            if (missing) githubUnavailable = true else openProjectLink(context, "https://github.com/Rembos1k")
+            if (missing) githubUnavailable = true else openProjectLink(context, "https://github.com/Rembosss")
         } finally { checkingGitHub = false }
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item("heading") {
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)) {
             EverisPageHeading(stringResource(R.string.about), onBack)
         }
+      LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item("app") { SettingsSection("Everis") {
             Text(stringResource(R.string.app_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.privacy_summary), style = MaterialTheme.typography.bodySmall)
@@ -86,6 +87,7 @@ fun AboutScreen(diary: DiaryViewModel, onBack: () -> Unit) {
             Text(stringResource(R.string.special_thanks), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             PersonRow(donor.name, stringResource(R.string.codex_subscription_credit), donor, false) { person = "donor" }
         } }
+      }
     }
     if (person != null) {
         val profile = when (person) { "rembos" -> rembos; "donor" -> donor; else -> null }
@@ -109,7 +111,7 @@ fun AboutScreen(diary: DiaryViewModel, onBack: () -> Unit) {
     if (githubUnavailable) EverisAlertDialog(onDismissRequest = { githubUnavailable = false },
         title = { Text(stringResource(R.string.github_profile_unavailable)) },
         text = { Text(stringResource(R.string.github_profile_unavailable_body)) },
-        confirmButton = { EverisTextButton(onClick = { githubUnavailable = false; openProjectLink(context, "https://github.com/Rembos1k") }) { Text("GitHub") } },
+        confirmButton = { EverisTextButton(onClick = { githubUnavailable = false; openProjectLink(context, "https://github.com/Rembosss") }) { Text("GitHub") } },
         dismissButton = { EverisTextButton(onClick = { githubUnavailable = false; openProjectLink(context, "https://t.me/Rembos1k") }) { Text("Telegram") } })
 }
 

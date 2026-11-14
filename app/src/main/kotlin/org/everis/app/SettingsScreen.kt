@@ -6,10 +6,15 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.snapFlingBehavior
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -67,20 +72,24 @@ fun SettingsScreen(diary: DiaryViewModel) {
         save = { it }, restore = { restoreSettingsPage(it) })) { mutableStateOf("root") }
     var customColor by remember { mutableStateOf(false) }
     var history by remember { mutableStateOf(false) }
+    OnSectionReset { customColor = false; history = false; page = "root" }
     val state = diary.state
+    val active = LocalScreenActive.current
+    BackHandler(enabled = active && page != "root") { page = "root" }
     AnimatedContent(targetState = page, label = "settings page", contentKey = { it },
         modifier = Modifier.fillMaxSize().clipToBounds().background(MaterialTheme.colorScheme.background),
         transitionSpec = { screenTransition(if (targetState == "root") -1 else 1, state.performanceMode) }) { current ->
       Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (current == "about") AboutScreen(diary) { page = "root" }
-        else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item("title") {
+        else Column(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)) {
                 EverisPageHeading(stringResource(when (current) {
                         "study" -> R.string.study_schedule_settings; "appearance" -> R.string.appearance
                         "language" -> R.string.language; "haptics" -> R.string.haptics_settings; "performance" -> R.string.performance_mode; "notifications" -> R.string.notifications
                         "data" -> R.string.data_transfer; else -> R.string.settings
                     }), if (current != "root") ({ page = "root" }) else null)
             }
+          LazyColumn(Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             when (current) {
                 "root" -> {
                     item("study-menu") { SettingsSection(stringResource(R.string.study_settings)) {
@@ -101,7 +110,7 @@ fun SettingsScreen(diary: DiaryViewModel) {
                 }
                 "study" -> item("study") { SettingsSection(null) {
                 Text(state.group?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(R.string.source_caption), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.university_source, universityName(state.group?.university ?: "rsue")), style = MaterialTheme.typography.bodySmall)
                 EverisOutlinedButton(onClick = diary::changeGroup, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.change_group)) }
                 if (state.subgroups.isNotEmpty()) {
                     Text(stringResource(R.string.subgroup), style = MaterialTheme.typography.titleSmall)
@@ -122,6 +131,8 @@ fun SettingsScreen(diary: DiaryViewModel) {
                 } }
                 "appearance" -> item("appearance") { SettingsSection(null) {
                 ThemePreviews(diary)
+                SettingSwitch(stringResource(R.string.new_dock), state.newDock) { diary.setNewDock(it) }
+                Text(stringResource(R.string.new_dock_info), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 val dark = when (state.themeMode) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
                 SettingSwitch(stringResource(R.string.black_theme), state.blackTheme && dark, dark) { diary.setBlackTheme(it) }
                 Text(stringResource(R.string.palette), style = MaterialTheme.typography.titleSmall)
@@ -149,6 +160,7 @@ fun SettingsScreen(diary: DiaryViewModel) {
                 "notifications" -> item("notifications") { SettingsSection(null) { NotificationSettings(diary) } }
                 "data" -> item("data") { SettingsSection(null) { BackupSettings(diary) } }
             }
+          }
         }
       }
     }
@@ -361,6 +373,9 @@ private fun TimeWheel(count: Int, initial: Int, rows: Int, label: String, modifi
         val middle = (info.viewportStartOffset + info.viewportEndOffset) / 2
         info.visibleItemsInfo.minByOrNull { kotlin.math.abs(it.offset + it.size / 2 - middle) }?.index ?: initial
     }
+    val decay = remember { exponentialDecay<Float>(frictionMultiplier = .7f) }
+    val snapping = remember(list) { SnapLayoutInfoProvider(list) }
+    val fling = remember(snapping, decay) { snapFlingBehavior(snapping, decay, spring(dampingRatio = .93f, stiffness = 350f)) }
     val selected by remember { derivedStateOf { center() % count } }
     val callback by rememberUpdatedState(onSelected)
     val feedback = LocalEverisHaptics.current
@@ -373,7 +388,7 @@ private fun TimeWheel(count: Int, initial: Int, rows: Int, label: String, modifi
         }
     }
     val largeFont = LocalConfiguration.current.fontScale > 1.4f
-    LazyColumn(state = list, flingBehavior = rememberSnapFlingBehavior(list), contentPadding = PaddingValues(vertical = ((rows - 1) * 24).dp),
+    LazyColumn(state = list, flingBehavior = fling, contentPadding = PaddingValues(vertical = ((rows - 1) * 24).dp),
         modifier = modifier.height((rows * 48).dp).semantics { contentDescription = label; stateDescription = selected.toString() }) {
         items(count * 1000) { index ->
             val value = index % count

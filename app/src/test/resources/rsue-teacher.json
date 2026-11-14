@@ -1,0 +1,762 @@
+{
+  "kind": "Teacher",
+  "instance": "Возиянов Д.",
+  "weeks": [
+    {
+      "id": 1,
+      "name": "11. Нечетная",
+      "current": false,
+      "parity": 1,
+      "days": [
+        {
+          "id": 1,
+          "date": "09.11.2026",
+          "name": "Понедельник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "date": "10.11.2026",
+          "name": "Вторник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "date": "11.11.2026",
+          "name": "Среда",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "date": "12.11.2026",
+          "name": "Четверг",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "date": "13.11.2026",
+          "name": "Пятница",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "date": "14.11.2026",
+          "name": "Суббота",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": [
+                {
+                  "id": 8157163,
+                  "teacher": {
+                    "id": 3896,
+                    "name": "Возиянов Д."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Управление информационными технологиями и сервисами",
+                  "group": "МЕН-812",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "602"
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": [
+                {
+                  "id": 8157164,
+                  "teacher": {
+                    "id": 3896,
+                    "name": "Возиянов Д."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Управление информационными технологиями и сервисами",
+                  "group": "МЕН-812",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "602"
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "12. Четная",
+      "current": true,
+      "parity": 2,
+      "days": [
+        {
+          "id": 1,
+          "date": "16.11.2026",
+          "name": "Понедельник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "date": "17.11.2026",
+          "name": "Вторник",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "date": "18.11.2026",
+          "name": "Среда",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "date": "19.11.2026",
+          "name": "Четверг",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "date": "20.11.2026",
+          "name": "Пятница",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": []
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": []
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "date": "21.11.2026",
+          "name": "Суббота",
+          "pairs": [
+            {
+              "id": 1,
+              "startTime": "08:30:00",
+              "endTime": "10:00:00",
+              "lessons": []
+            },
+            {
+              "id": 2,
+              "startTime": "10:10:00",
+              "endTime": "11:40:00",
+              "lessons": []
+            },
+            {
+              "id": 3,
+              "startTime": "11:50:00",
+              "endTime": "13:20:00",
+              "lessons": [
+                {
+                  "id": 8157898,
+                  "teacher": {
+                    "id": 3896,
+                    "name": "Возиянов Д."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Управление информационными технологиями и сервисами",
+                  "group": "МЕН-812",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "535"
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "startTime": "13:50:00",
+              "endTime": "15:20:00",
+              "lessons": [
+                {
+                  "id": 8157899,
+                  "teacher": {
+                    "id": 3896,
+                    "name": "Возиянов Д."
+                  },
+                  "subgroup": {
+                    "id": 0,
+                    "name": "Нет подгруппы"
+                  },
+                  "subject": "Управление информационными технологиями и сервисами",
+                  "group": "МЕН-812",
+                  "kind": {
+                    "id": 1,
+                    "name": "Лекция",
+                    "shortName": "л."
+                  },
+                  "audience": "535"
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "startTime": "15:30:00",
+              "endTime": "17:00:00",
+              "lessons": []
+            },
+            {
+              "id": 6,
+              "startTime": "17:10:00",
+              "endTime": "18:40:00",
+              "lessons": []
+            },
+            {
+              "id": 7,
+              "startTime": "18:45:00",
+              "endTime": "20:15:00",
+              "lessons": []
+            },
+            {
+              "id": 8,
+              "startTime": "20:20:00",
+              "endTime": "21:50:00",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

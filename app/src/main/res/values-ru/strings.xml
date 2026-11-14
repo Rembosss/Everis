@@ -20,7 +20,6 @@
     <string name="groups_error">Не удалось загрузить список групп. Проверьте подключение и повторите попытку.</string>
     <string name="no_groups">Группы не найдены</string>
     <string name="choose_hint">Выберите группу из списка</string>
-    <string name="source_caption">РГЭУ (РИНХ) · публичное расписание</string>
     <string name="loading_schedule">Загружаем расписание…</string>
     <string name="schedule_error">Не удалось обновить расписание. Проверьте подключение и повторите попытку.</string>
     <string name="unknown_day">На эту дату нет загруженного расписания</string>
@@ -236,4 +235,23 @@
     <string name="haptics_caption">Отклик на действия</string>
     <string name="performance_caption">Анимации и тяжёлые эффекты</string>
     <string name="project_repository">GitHub-репозиторий</string>
+    <string name="university">Вуз</string>
+    <string name="university_rsue">РГЭУ (РИНХ)</string>
+    <string name="university_dstu">ДГТУ</string>
+    <string name="university_source">%1$s · публичное расписание</string>
+    <string name="lesson_type_filter">Тип занятия</string>
+    <string name="all_lesson_types">Все типы</string>
+    <string name="lesson_list_scroll_hint">Занятий: %1$d · прокручивайте список</string>
+    <string name="teacher_timetable">Расписание преподавателей</string>
+    <string name="teacher_name_hint">ФИО преподавателя</string>
+    <string name="teacher_search_help">Введите фамилию или полное имя преподавателя.</string>
+    <string name="teacher_not_found">Преподаватель не найден</string>
+    <string name="teacher_load_error">Не удалось получить данные вуза. Попробуйте ещё раз.</string>
+    <string name="teacher_cached_directory">Показан сохранённый список преподавателей.</string>
+    <string name="teacher_cached_schedule">Показано сохранённое расписание. Проверить изменения не удалось.</string>
+    <string name="select_teacher">Выбрать преподавателя</string>
+    <string name="no_published_lessons">На этот день нет опубликованных занятий</string>
+    <string name="new_dock">Новый вид дока</string>
+    <string name="new_dock_info">Компактная плавающая панель поверх содержимого.</string>
+    <string name="section_root_action">В начало раздела</string>
 </resources>

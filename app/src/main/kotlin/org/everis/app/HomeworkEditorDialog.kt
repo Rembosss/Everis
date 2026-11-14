@@ -15,6 +15,7 @@ import org.everis.app.data.RsueData
 import org.everis.app.data.disciplineKey
 import org.everis.app.data.disciplineTitle
 import org.everis.app.data.disciplineTargets
+import org.everis.core.LessonType
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -30,7 +31,9 @@ fun HomeworkEditorDialog(diary: DiaryViewModel, request: HomeworkRequest) {
     }
     var disciplineId by rememberSaveable(request) { mutableStateOf(disciplineKey(request.subject).ifEmpty { courses.firstOrNull()?.first.orEmpty() }) }
     val subject = courses.firstOrNull { it.first == disciplineId }?.second ?: request.subject
-    val candidates = remember(state.schedule, request, disciplineId) { disciplineTargets(state.schedule?.lessons.orEmpty(), subject, request.after) }
+    var selectedType by rememberSaveable(request) { mutableStateOf("ALL") }
+    val allCandidates = remember(state.schedule, request, disciplineId) { disciplineTargets(state.schedule?.lessons.orEmpty(), subject, request.after) }
+    val candidates = remember(allCandidates, selectedType) { allCandidates.filter { selectedType == "ALL" || it.type.name == selectedType } }
     val initialId = request.initialLessonId ?: if (request.editTaskId?.startsWith("manual:") == true) "" else candidates.firstOrNull()?.id.orEmpty()
     var targetId by rememberSaveable(request) { mutableStateOf(initialId) }
     val originalId = remember(request) { request.editTaskId.orEmpty() }
@@ -50,9 +53,17 @@ fun HomeworkEditorDialog(diary: DiaryViewModel, request: HomeworkRequest) {
             if (request.disciplineId.isBlank()) {
                 EverisSelect(disciplineId, courses.map { MenuChoice(it.first, it.second) }, { id ->
                     disciplineId = id
-                    targetId = disciplineTargets(state.schedule?.lessons.orEmpty(), courses.firstOrNull { it.first == id }?.second.orEmpty(), request.after).firstOrNull()?.id.orEmpty()
+                    targetId = disciplineTargets(state.schedule?.lessons.orEmpty(), courses.firstOrNull { it.first == id }?.second.orEmpty(), request.after)
+                        .firstOrNull { selectedType == "ALL" || it.type.name == selectedType }?.id.orEmpty()
                 })
             } else Text(subject, style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.lesson_type_filter), style = MaterialTheme.typography.labelLarge)
+            EverisSelect(selectedType, listOf(MenuChoice("ALL", stringResource(R.string.all_lesson_types))) +
+                listOf(LessonType.LECTURE, LessonType.PRACTICE, LessonType.LABORATORY).map { MenuChoice(it.name, stringResource(lessonTypeLabel(it))) }, { type ->
+                selectedType = type
+                val filtered = allCandidates.filter { type == "ALL" || it.type.name == type }
+                if (filtered.none { it.id == targetId }) targetId = filtered.firstOrNull()?.id.orEmpty()
+            })
             if (candidates.isEmpty()) Text(stringResource(R.string.no_future_lessons), style = MaterialTheme.typography.bodySmall)
             val displayed = (candidates.take(12) + listOfNotNull(target)).distinctBy { it.id }
             val formatter = DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm", locale)

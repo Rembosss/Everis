@@ -11,7 +11,7 @@ import java.time.Instant
 
 /** Whitelist only portable user data. Never export keystore keys or delivery/device journals. */
 object BackupPayload {
-    private val keys = setOf("groups", "group", "subgroup", "onlyMySubgroup", "performanceMode", "hapticsEnabled", "schedule", "tasks", "taskMetadata", "completedTasks",
+    private val keys = setOf("groups", "group", "subgroup", "onlyMySubgroup", "performanceMode", "hapticsEnabled", "newDock", "schedule", "tasks", "taskMetadata", "completedTasks",
         "palette", "themeMode", "blackTheme", "language", "completed", "notifications", "history", "lastVerified")
 
     fun encode(snapshot: JSONObject): ByteArray {
@@ -19,21 +19,23 @@ object BackupPayload {
         val payload = JSONObject()
         keys.forEach { if (source.has(it)) payload.put(it, source.get(it)) }
         payload.optJSONObject("notifications")?.remove("generation")
-        return JSONObject().put("format", "everis-backup").put("version", 1).put("created", Instant.now().toString())
+        val catalog = source.optJSONArray("groups") ?: org.json.JSONArray()
+        val multisource = source.selectedGroup()?.university == "dstu" || (0 until catalog.length()).any { studentGroup(catalog.getJSONObject(it)).university == "dstu" }
+        return JSONObject().put("format", "everis-backup").put("version", if (multisource) 2 else 1).put("created", Instant.now().toString())
             .put("payload", payload).toString().toByteArray(Charsets.UTF_8)
     }
 
     fun validate(bytes: ByteArray): JSONObject {
         require(bytes.size in 1..SnapshotBackup.MAX_PLAINTEXT_BYTES)
         val root = portableJson(bytes)
-        require(root.optString("format") == "everis-backup" && root.optInt("version") == 1)
+        require(root.optString("format") == "everis-backup" && root.optInt("version") in 1..2)
         val original = root.getJSONObject("payload")
         val value = JSONObject()
         keys.forEach { if (original.has(it)) value.put(it, original.get(it)) }
         listOf("group", "tasks", "taskMetadata", "notifications").forEach { key -> if (value.has(key)) require(value.get(key) is JSONObject) }
         listOf("groups", "completedTasks", "history").forEach { key -> if (value.has(key)) require(value.get(key) is org.json.JSONArray) }
         listOf("subgroup", "schedule", "palette", "themeMode", "language", "lastVerified").forEach { key -> if (value.has(key)) require(value.get(key) is String) }
-        listOf("onlyMySubgroup", "performanceMode", "hapticsEnabled", "blackTheme", "completed").forEach { key ->
+        listOf("onlyMySubgroup", "performanceMode", "hapticsEnabled", "newDock", "blackTheme", "completed").forEach { key ->
             if (value.has(key)) require(value.get(key) is Boolean)
         }
         val group = value.selectedGroup()
@@ -42,13 +44,14 @@ object BackupPayload {
         val raw = value.optString("schedule")
         if (raw.isNotBlank()) {
             require(group != null)
-            require(RsueData.parseSchedule(raw, group.name).lessons.size <= 50_000)
+            require(parseStudentSchedule(raw, group).lessons.size <= 50_000)
         }
         val groups = value.optJSONArray("groups")
         require((groups?.length() ?: 0) <= 30_000)
         if (groups != null) for (i in 0 until groups.length()) {
             val item = groups.getJSONObject(i)
-            require(item.getString("id").length in 1..200 && item.getString("name").length in 1..200)
+            val parsed = studentGroup(item)
+            require(parsed.id.length in 1..200 && parsed.name.length in 1..200)
         }
         val tasks = value.optJSONObject("tasks") ?: JSONObject()
         require(tasks.length() <= 10_000)
@@ -138,27 +141,27 @@ object SchedulePayload {
     fun encode(snapshot: JSONObject): ByteArray {
         val group = requireNotNull(snapshot.selectedGroup())
         val raw = snapshot.getString("schedule")
-        RsueData.parseSchedule(raw, group.name)
-        return JSONObject().put("format", "everis-schedule").put("version", 1)
-            .put("created", Instant.now().toString()).put("group", JSONObject().put("id", group.id).put("name", group.name))
+        parseStudentSchedule(raw, group)
+        return JSONObject().put("format", "everis-schedule").put("version", if (group.university == "dstu") 2 else 1)
+            .put("created", Instant.now().toString()).put("group", group.toJson())
             .put("schedule", raw).toString().toByteArray(Charsets.UTF_8)
     }
     fun validate(bytes: ByteArray): JSONObject {
         require(bytes.size in 1..SnapshotBackup.MAX_PLAINTEXT_BYTES)
         val value = portableJson(bytes)
-        require(value.optString("format") == "everis-schedule" && value.optInt("version") == 1)
+        require(value.optString("format") == "everis-schedule" && value.optInt("version") in 1..2)
         val group = requireNotNull(value.selectedGroup())
         require(group.id.isNotBlank() && group.id.length <= 200 && group.name.isNotBlank() && group.name.length <= 200)
-        require(RsueData.parseSchedule(value.getString("schedule"), group.name).lessons.size <= 50_000)
+        require(parseStudentSchedule(value.getString("schedule"), group).lessons.size <= 50_000)
         return JSONObject().put("group", value.getJSONObject("group")).put("schedule", value.getString("schedule"))
     }
     fun restore(target: JSONObject, payload: JSONObject) {
         val group = requireNotNull(payload.selectedGroup())
-        val schedule = RsueData.parseSchedule(payload.getString("schedule"), group.name)
+        val schedule = parseStudentSchedule(payload.getString("schedule"), group)
         val old = target.selectedGroup()
         val raw = target.optString("schedule")
-        if (old != null && raw.isNotBlank()) rememberTaskMetadata(target, RsueData.parseSchedule(raw, old.name).lessons)
-        val oldLessons = if (old != null && raw.isNotBlank()) RsueData.parseSchedule(raw, old.name).lessons else emptyList()
+        if (old != null && raw.isNotBlank()) rememberTaskMetadata(target, parseStudentSchedule(raw, old).lessons)
+        val oldLessons = if (old != null && raw.isNotBlank()) parseStudentSchedule(raw, old).lessons else emptyList()
         val byId = schedule.lessons.associateBy { it.id }
         oldLessons.filter { it.start.toLocalDate() in schedule.days && (byId[it.id] == null || byId[it.id]?.disciplineId != it.disciplineId) }
             .forEach { target.archiveHomeworkForReview(it) }

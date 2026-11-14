@@ -7,12 +7,12 @@ The checked-in project pins Gradle 9.6.0 (wrapper checksum included), Android Gr
 Set the SDK location in Android Studio, through `ANDROID_HOME`, or in an untracked `local.properties` file (`sdk.dir=...`). No publisher-specific files are required for Debug builds.
 
 ```sh
-git clone https://github.com/Rembos1k/Everis.git
+git clone https://github.com/Rembosss/Everis.git
 cd Everis
 ./gradlew :app:assembleDebug
 ```
 
-Debug APK: `Releases/0.1-beta/Debug/Everis-0.1-beta-arm64-v8a-debug.apk`. It uses package `org.everis.app.debug` and your local Android debug signing key. The app requires Android 12/API 31 or newer and an ARM64 device. Both Debug and Release APKs target only `arm64-v8a`; x86 emulator images need native ARM translation to install them.
+Debug APK: `Releases/0.2-beta/Debug/Everis-0.2-beta-arm64-v8a-debug.apk`. It uses package `org.everis.app.debug` and your local Android debug signing key. The app requires Android 12/API 31 or newer and an ARM64 device. Both Debug and Release APKs target only `arm64-v8a`; x86 emulator images need native ARM translation to install them.
 
 ## Checks
 
@@ -21,7 +21,7 @@ Debug APK: `Releases/0.1-beta/Debug/Everis-0.1-beta-arm64-v8a-debug.apk`. It use
 python3 tools/check_resources.py
 ```
 
-The core modules use executable check tasks rather than discovered JUnit tests. The 0.1-beta application snapshot passed 109 app JUnit tests, 59 domain checks, 10 source checks and 14 security checks. Resource validation covers 226 keys in five languages. See [verification](VERIFICATION.md).
+The core modules use executable check tasks rather than discovered JUnit tests. The 0.2-beta application snapshot passed 136 app JUnit tests, 59 domain checks, 10 source checks and 14 security checks. Resource validation covers 244 keys in five languages. See [verification](VERIFICATION.md).
 
 ## Release signing
 
@@ -35,7 +35,7 @@ Official private signing keys are not distributed. Without local signing configu
 
 - `app`: Compose/Material 3 Expressive UI, encrypted local snapshot, homework, WorkManager reminders and public update checks.
 - `core/domain`: timetable, day status, period summaries, subgroup and reminder policies.
-- `core/sources`: bounded HTTPS client and source adapter interfaces. The current university adapter is RSUE/RINH.
+- `core/sources`: bounded HTTPS client and source adapter interfaces. University adapters cover RSUE/RINH and DSTU; teacher schedules and public catalogs are cached locally.
 - `core/security`: authenticated envelopes and compatibility support for older encrypted backup imports. Current portable exports are plain JSON.
 
 There is no application backend, sign-in, telemetry or cloud synchronization. Tests include public timetable fixtures, not user homework. Deprecated helper scripts, local QA recordings and development checkpoints are omitted from this repository snapshot. Existing cryptographic format identifiers remain stable for data compatibility.

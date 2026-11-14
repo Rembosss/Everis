@@ -3,6 +3,7 @@ package org.everis.app
 import androidx.compose.animation.*
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -30,7 +31,8 @@ fun WeekStrip(selected: LocalDate, lessons: List<Lesson>, published: Set<LocalDa
     val configuration = LocalConfiguration.current
     val locale = uiLocale(configuration)
     val narrow = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() < 360.dp } || configuration.fontScale > 1.3f
-    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+    val dayShape = RoundedCornerShape(20.dp)
+    Surface(shape = dayShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         AnimatedContent(start, modifier = Modifier.fillMaxWidth().clipToBounds(), label = "week strip", transitionSpec = {
             val direction = if (targetState > initialState) 1 else -1
             if (efficient) EnterTransition.None togetherWith ExitTransition.None else
@@ -38,7 +40,7 @@ fun WeekStrip(selected: LocalDate, lessons: List<Lesson>, published: Set<LocalDa
                 slideOutHorizontally(androidx.compose.animation.core.tween(320)) { -it * direction }
         }) { week ->
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-                Row(Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     repeat(7) { offset ->
                         val day = week.plusDays(offset.toLong())
                         val daily = remember(day, lessons) { lessonsForDay(day, RsueData.zone, lessons) }
@@ -50,9 +52,9 @@ fun WeekStrip(selected: LocalDate, lessons: List<Lesson>, published: Set<LocalDa
                             motion.defaultEffectsSpec(), label = "selected day text")
                         val description = day.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", locale)) + ", " +
                             if (known || daily.isNotEmpty()) stringResource(R.string.lesson_count, daily.size) else stringResource(R.string.unknown_day)
-                        Surface(onClick = { if (day != selected) feedback?.select(); onDay(day) }, modifier = Modifier.weight(1f).heightIn(min = 56.dp)
+                        Surface(onClick = { if (day != selected) feedback?.select(); onDay(day) }, modifier = Modifier.weight(1f).heightIn(min = 60.dp)
                             .semantics { contentDescription = description; this.selected = active },
-                            shape = MaterialTheme.shapes.large,
+                            shape = dayShape,
                             color = background, contentColor = foreground) {
                             Column(Modifier.padding(vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(0.dp)) {
                                 Text(day.dayOfWeek.getDisplayName(if (narrow) TextStyle.NARROW else TextStyle.SHORT, locale).removeSuffix("."),
