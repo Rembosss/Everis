@@ -29,7 +29,7 @@ Timetables, homework and preferences are stored on your device. Everis has no ap
 
 Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-Download signed ARM64 APKs from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta): [Release](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) or [Debug](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-debug.apk). Repository access is currently required. Package: `org.everis.app` (Debug: `org.everis.app.debug`). Android requires user confirmation to install updates.
+Download the signed [ARM64 Release APK](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Repository access is currently required. Package: `org.everis.app`. Android requires user confirmation to install updates.
 
 ## Build from source
 

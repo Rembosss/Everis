@@ -29,7 +29,7 @@
 
 Android 12 и новее. Единственная поддерживаемая архитектура — ARM64 (`arm64-v8a`), включая отладочные и релизные сборки. ARMv7 и x86_64 не поддерживаются.
 
-Подписанные ARM64 APK находятся в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta): [Release](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) и [Debug](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-debug.apk). Пока требуется доступ к приватному репозиторию. Пакет: `org.everis.app` (Debug: `org.everis.app.debug`). Установка обновлений подтверждается пользователем средствами Android.
+Подписанный [Release APK для ARM64](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) доступен в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Пока требуется доступ к приватному репозиторию. Пакет: `org.everis.app`. Установка обновлений подтверждается пользователем средствами Android.
 
 ## Сборка из исходников
 
