@@ -2,7 +2,7 @@
 
 **English** · [Русский](README.ru.md)
 
-An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
+A free Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
 **Current version: 0.2-beta (build 10).** See [release notes](docs/CHANGELOG.md). This beta is intended for testing and feedback.
 
@@ -19,7 +19,7 @@ An independent Android university diary with offline timetables, homework and lo
 - Light, dark and black themes, Monet dynamic colors and custom accents.
 - Russian, Ukrainian, Belarusian, Kazakh and English interfaces.
 
-Public timetable adapters support Rostov State University of Economics (RSUE/RINH) and Don State Technical University (DSTU). Other universities are planned. Everis is an independent project and is not an official university app or service.
+Public timetable adapters support Rostov State University of Economics (RSUE/RINH) and Don State Technical University (DSTU). Other universities are planned. Everis is not an official university app or service.
 
 ## Privacy
 
