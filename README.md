@@ -4,7 +4,7 @@
 
 An independent Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
-**Current version: 0.2-beta (build 10).** See [release notes](docs/CHANGELOG.md). This beta is intended for testing and feedback. The repository currently remains private.
+**Current version: 0.2-beta (build 10).** See [release notes](docs/CHANGELOG.md). This beta is intended for testing and feedback.
 
 ## Features
 
@@ -29,7 +29,7 @@ Timetables, homework and preferences are stored on your device. Everis has no ap
 
 Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-Download the signed [ARM64 Release APK](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Repository access is currently required. Package: `org.everis.app`. Android requires user confirmation to install updates.
+Download the signed [ARM64 Release APK](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Package: `org.everis.app`. Android requires user confirmation to install updates.
 
 ## Build from source
 
@@ -54,6 +54,6 @@ No donors are listed yet, and a donation link is not available. If you would lik
 ## Developers
 
 - [Rembos1k](https://github.com/Rembosss)
-- [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
+- [Codex](https://openai.com/codex/) — implementation and testing · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
 
 This project was made possible by donors, plenty of caffeine, Codex, and good music.

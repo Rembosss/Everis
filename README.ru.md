@@ -4,7 +4,7 @@
 
 Независимый электронный дневник для Android: расписание вуза, домашние задания и локальные напоминания в интерфейсе Material 3 Expressive.
 
-**Текущая версия: 0.2-beta (сборка 10).** Изменения — в [changelog](docs/CHANGELOG.md). Бета предназначена для тестирования и обратной связи. Репозиторий пока остаётся приватным.
+**Текущая версия: 0.2-beta (сборка 10).** Изменения — в [changelog](docs/CHANGELOG.md). Бета предназначена для тестирования и обратной связи.
 
 ## Возможности
 
@@ -29,7 +29,7 @@
 
 Android 12 и новее. Единственная поддерживаемая архитектура — ARM64 (`arm64-v8a`), включая отладочные и релизные сборки. ARMv7 и x86_64 не поддерживаются.
 
-Подписанный [Release APK для ARM64](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) доступен в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Пока требуется доступ к приватному репозиторию. Пакет: `org.everis.app`. Установка обновлений подтверждается пользователем средствами Android.
+Подписанный [Release APK для ARM64](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) доступен в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Пакет: `org.everis.app`. Установка обновлений подтверждается пользователем средствами Android.
 
 ## Сборка из исходников
 
@@ -54,6 +54,6 @@ Android 12 и новее. Единственная поддерживаемая 
 ## Разработчики
 
 - [Rembos1k](https://github.com/Rembosss)
-- [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
+- [Codex](https://openai.com/codex/) — разработка и проверка · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
 
 Проект стал возможен благодаря донатерам, обилию кофеина, Codex и хорошей музыке.
