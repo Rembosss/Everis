@@ -43,11 +43,17 @@ See [Development](docs/DEVELOPMENT.md) for the pinned toolchain, build commands 
 
 Include your Everis version, Android version and steps to reproduce the problem. Do not publish personal homework, backups or private logs.
 
+## Donors
+
+No donors are listed yet, and a donation link is not available. If you would like to support the project, [contact me on Telegram](https://t.me/Rembos1k).
+
+### Special thanks
+
+- [@Gods_Mask](https://t.me/Gods_Mask) (for providing a Codex subscription).
+
 ## Developers
 
 - [Rembos1k](https://github.com/Rembosss)
 - [Codex](https://openai.com/codex/) · [GitHub app](https://github.com/apps/chatgpt-codex-connector)
-
-Special thanks to [@Gods_Mask](https://t.me/Gods_Mask) for providing a Codex subscription.
 
 This project was made possible by donors, plenty of caffeine, Codex, and good music.
