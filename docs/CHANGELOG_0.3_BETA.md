@@ -2,7 +2,7 @@
 
 ## English
 
-### What’s new since 0.2-beta
+### What’s new
 
 - Added group timetables for SFedU ICTIS, RGUPS and Southern University (IMBL). ICTIS also supports teacher timetables. For full-time RGUPS groups, Everis shows the current and following week based on the university’s two-week cycle. All three sources support offline viewing after the first download.
 - On compact screens or with large text, you can collapse the timetable summary to leave more room for the calendar.
@@ -19,7 +19,7 @@
 
 ## Русский
 
-### Что нового по сравнению с 0.2-beta
+### Что нового
 
 - Добавлены расписания групп ИКТИБ ЮФУ, РГУПС и Южного университета (ИУБиП). Для ИКТИБ доступно и расписание преподавателей. Для очных групп РГУПС Everis показывает текущую и следующую недели по двухнедельному циклу вуза. После первой загрузки расписания всех трёх вузов доступны без интернета.
 - На небольшом экране или при крупном шрифте сводку занятий можно свернуть, чтобы освободить место для календаря.
