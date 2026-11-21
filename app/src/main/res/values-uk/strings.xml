@@ -49,7 +49,7 @@
     <string name="study_total">Навчання: %1$s</string>
     <string name="break_total">Перерви: %1$s</string>
     <string name="allow_notifications">Дозволити сповіщення</string>
-    <string name="appearance">Оформлення</string>
+    <string name="appearance">Інтерфейс</string>
     <string name="background_timing_info">Час відповідає годиннику пристрою. Android може затримувати фонову роботу під час сну. Помилка перевірки не означає відсутності змін.</string>
     <string name="bedtime_check">Перевіряти перед сном</string>
     <string name="bedtime_time">Час вечірньої перевірки</string>
@@ -218,22 +218,16 @@
     <string name="no_link_handler">Немає застосунку для відкриття посилання.</string>
     <string name="subgroup_teacher_heading">Підгрупа %1$s</string>
     <string name="study_schedule_settings">Група та розклад</string>
-    <string name="personalization">Оформлення та поведінка</string>
     <string name="notification_settings_caption">Перевірки розкладу та нагадування про завдання</string>
-    <string name="appearance_caption">Тема та кольори</string>
+    <string name="appearance_caption">Мова, тема, кольори та ефекти</string>
     <string name="data_transfer">Перенесення даних</string>
     <string name="data_transfer_caption">Копії та обмін розкладом</string>
     <string name="about_caption">Версія, оновлення та контакти</string>
-    <string name="haptics_settings">Тактильний відгук</string>
-    <string name="vibration">Вібрація</string>
-    <string name="haptics_info">М’який відгук під час вибору, перемикання налаштувань і прокручування часу. Враховує системні налаштування вібрації.</string>
-    <string name="language_caption">Мова інтерфейсу</string>
+    <string name="vibration">Тактильний відгук</string>
     <string name="app_settings">Застосунок</string>
     <string name="homework_repeat_info">Щодня — нагадувати щодня протягом вибраного строку. Інакше — за вказану кількість днів і за день до заняття.</string>
     <string name="github_profile_unavailable">Не вдалося перевірити профіль</string>
     <string name="github_profile_unavailable_body">Спробуйте відкрити профіль у браузері. Якщо сторінка недоступна, зв’яжіться з розробником у Telegram.</string>
-    <string name="haptics_caption">Відгук на дії</string>
-    <string name="performance_caption">Анімації та важкі ефекти</string>
     <string name="project_repository">Репозиторій GitHub</string>
     <string name="university">Заклад вищої освіти</string>
     <string name="university_rsue">РДЕУ (РІНГ)</string>
@@ -254,4 +248,9 @@
     <string name="new_dock">Новий вигляд панелі</string>
     <string name="new_dock_info">Компактна плаваюча панель поверх вмісту.</string>
     <string name="section_root_action">На початок розділу</string>
+    <string name="university_sfedu">ПФУ (ІКТІБ)</string>
+    <string name="university_iubip">Південний університет (ІУБіП)</string>
+    <string name="university_rgups">РГУПС</string>
+    <string name="rgups_cycle_notice">Денна форма. Дати поточного й наступного тижня розраховано за циклом «над / під рискою» на сайті. Перевірте актуальність розкладу в університеті.</string>
+    <string name="rgups_vpn_notice">Із VPN розклад РГУПС може не завантажуватися. На час перевірки вимкніть VPN або додайте Everis чи домен www.rgups.ru до винятків VPN.</string>
 </resources>

@@ -154,11 +154,13 @@ private fun PersonAvatar(profile: PublicProfile?, codex: Boolean, modifier: Modi
 @Composable
 fun AppUpdateDialog(update: AppUpdate, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val language = uiLocale(androidx.compose.ui.platform.LocalConfiguration.current).language
+    val notes = remember(update.notes, language) { org.everis.app.updates.localizedReleaseNotes(update.notes, language) }
     EverisAlertDialog(onDismissRequest = onDismiss, title = { Text(stringResource(R.string.update_available), fontWeight = FontWeight.Bold) },
         text = {
             Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.app_version, update.version), style = MaterialTheme.typography.titleMedium)
-                SelectionContainer { Text(update.notes.ifBlank { stringResource(R.string.no_release_notes) }, style = MaterialTheme.typography.bodyMedium) }
+                SelectionContainer { Text(notes.ifBlank { stringResource(R.string.no_release_notes) }, style = MaterialTheme.typography.bodyMedium) }
             }
         }, confirmButton = { EverisTextButton(onClick = {
             if (trustedDownload(update.downloadUrl, BuildConfig.UPDATE_REPOSITORY)) { openProjectLink(context, update.downloadUrl); onDismiss() }

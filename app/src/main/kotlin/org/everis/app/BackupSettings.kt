@@ -53,7 +53,7 @@ fun BackupHost(diary: DiaryViewModel, content: @Composable () -> Unit) {
                     Text(stringResource(R.string.legacy_backup_info))
                     if (diary.backupResult == false) Text(stringResource(R.string.legacy_backup_error), color = MaterialTheme.colorScheme.error)
                     OutlinedTextField(legacyPassword, { legacyPassword = it.take(1024) }, label = { Text(stringResource(R.string.backup_password)) },
-                        singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                        singleLine = true, shape = EverisInputShape, colors = everisFieldColors(), visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
                 }
             }, confirmButton = { EverisTextButton(onClick = {
                 val password = legacyPassword.toCharArray(); legacyPassword = ""

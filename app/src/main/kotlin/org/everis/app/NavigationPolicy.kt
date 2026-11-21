@@ -47,7 +47,8 @@ fun restoreSelectedTab(saved: Any?): Int {
 }
 
 fun restoreSettingsPage(saved: String): String = when (saved) {
-    "general" -> "language"
-    "root", "study", "appearance", "language", "haptics", "performance", "notifications", "data", "about" -> saved
+    "general" -> "root"
+    "language", "haptics", "performance" -> "appearance"
+    "root", "study", "appearance", "notifications", "data", "about" -> saved
     else -> "root"
 }

@@ -49,7 +49,7 @@
     <string name="study_total">Study time: %1$s</string>
     <string name="break_total">Breaks: %1$s</string>
     <string name="allow_notifications">Allow notifications</string>
-    <string name="appearance">Appearance</string>
+    <string name="appearance">Interface</string>
     <string name="background_timing_info">Times use the device clock. Android may delay background work during sleep. A failed check never means there were no changes.</string>
     <string name="bedtime_check">Check before bed</string>
     <string name="bedtime_time">Evening check time</string>
@@ -214,22 +214,16 @@
     <string name="no_link_handler">No app is available to open this link.</string>
     <string name="subgroup_teacher_heading">Subgroup %1$s</string>
     <string name="study_schedule_settings">Group and timetable</string>
-    <string name="personalization">Appearance and behavior</string>
     <string name="notification_settings_caption">Schedule checks and homework reminders</string>
-    <string name="appearance_caption">Theme and colors</string>
+    <string name="appearance_caption">Language, theme, colors and effects</string>
     <string name="data_transfer">Data transfer</string>
     <string name="data_transfer_caption">Backups and schedule sharing</string>
     <string name="about_caption">Version, updates and contacts</string>
-    <string name="haptics_settings">Haptic feedback</string>
-    <string name="vibration">Vibration</string>
-    <string name="haptics_info">Gentle feedback for selections, switches and time wheels. Respects system vibration settings.</string>
-    <string name="language_caption">Interface language</string>
+    <string name="vibration">Haptic feedback</string>
     <string name="app_settings">App</string>
     <string name="homework_repeat_info">Daily reminders repeat throughout the selected period. Otherwise, reminders arrive the selected number of days before class and again one day before.</string>
     <string name="github_profile_unavailable">Could not verify the profile</string>
     <string name="github_profile_unavailable_body">Try opening the profile in your browser. If the page is unavailable, contact the developer on Telegram.</string>
-    <string name="haptics_caption">Feedback for your actions</string>
-    <string name="performance_caption">Animations and visual effects</string>
     <string name="project_repository">GitHub repository</string>
     <string name="university">University</string>
     <string name="university_rsue">RSUE (RINH)</string>
@@ -250,4 +244,9 @@
     <string name="new_dock">New dock style</string>
     <string name="new_dock_info">A compact floating dock above the content.</string>
     <string name="section_root_action">Return to section home</string>
+    <string name="university_sfedu">SFedU (ICTIS)</string>
+    <string name="university_iubip">Southern University (IMBL)</string>
+    <string name="university_rgups">Rostov State Transport University (RGUPS)</string>
+    <string name="rgups_cycle_notice">Full-time study. Dates for this week and next are calculated from the website’s alternating-week cycle. Confirm timetable validity with your university.</string>
+    <string name="rgups_vpn_notice">RGUPS timetables may fail to load with a VPN. Turn it off while checking, or add Everis or www.rgups.ru to your VPN exclusions.</string>
 </resources>

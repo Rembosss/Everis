@@ -20,7 +20,10 @@ fun screenTransition(direction: Int = 1, efficient: Boolean = false): ContentTra
 /** Text moves in one direction without two independent fades exposing the backdrop. */
 fun headingTransition(direction: Int = 1, efficient: Boolean = false): ContentTransform {
     if (efficient) return EnterTransition.None togetherWith ExitTransition.None
-    val duration = 300
-    return slideInVertically(tween(duration, easing = FastOutSlowInEasing)) { it * direction } togetherWith
-        slideOutVertically(tween(duration, easing = FastOutSlowInEasing)) { -it * direction }
+    val duration = 320
+    val incoming = fadeIn(tween(180, easing = FastOutSlowInEasing)) +
+        slideInVertically(tween(duration, easing = FastOutSlowInEasing)) { it / 3 * direction }
+    val outgoing = fadeOut(tween(140)) +
+        slideOutVertically(tween(duration, easing = FastOutSlowInEasing)) { -it / 3 * direction }
+    return ContentTransform(incoming, outgoing, targetContentZIndex = 1f, sizeTransform = null)
 }

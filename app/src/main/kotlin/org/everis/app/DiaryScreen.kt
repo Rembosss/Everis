@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asComposeRenderEffect
@@ -156,7 +157,11 @@ private fun MainScreens(diary: DiaryViewModel) {
     val feedback = LocalEverisHaptics.current
     val holder = rememberSaveableStateHolder()
     val density = LocalDensity.current
-    val clearance = if (newDock) 74.dp + with(density) { WindowInsets.navigationBars.getBottom(this).toDp() } else 0.dp
+    var dockHeightPx by remember { mutableIntStateOf(0) }
+    val clearance = if (newDock) {
+        if (dockHeightPx > 0) with(density) { dockHeightPx.toDp() }
+        else 74.dp + with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+    } else 0.dp
     val selectTab: (Int) -> Unit = { index ->
         if (selection.index != index) { feedback?.select(); selection = selection.select(index) }
     }
@@ -199,7 +204,7 @@ private fun MainScreens(diary: DiaryViewModel) {
                     }
                 }
             }
-            if (newDock) FloatingNavigation(tab, selectTab, resetSection, Modifier.align(Alignment.BottomCenter))
+            if (newDock) FloatingNavigation(tab, selectTab, resetSection, Modifier.align(Alignment.BottomCenter).onSizeChanged { dockHeightPx = it.height })
         }
     }
 }

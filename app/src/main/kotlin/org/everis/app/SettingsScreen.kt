@@ -8,7 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -44,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -85,7 +87,7 @@ fun SettingsScreen(diary: DiaryViewModel) {
             Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)) {
                 EverisPageHeading(stringResource(when (current) {
                         "study" -> R.string.study_schedule_settings; "appearance" -> R.string.appearance
-                        "language" -> R.string.language; "haptics" -> R.string.haptics_settings; "performance" -> R.string.performance_mode; "notifications" -> R.string.notifications
+                        "notifications" -> R.string.notifications
                         "data" -> R.string.data_transfer; else -> R.string.settings
                     }), if (current != "root") ({ page = "root" }) else null)
             }
@@ -96,13 +98,8 @@ fun SettingsScreen(diary: DiaryViewModel) {
                         SettingsLink(stringResource(R.string.study_schedule_settings), state.group?.name.orEmpty(), R.drawable.ic_disciplines) { page = "study" }
                         SettingsLink(stringResource(R.string.notifications), stringResource(R.string.notification_settings_caption), R.drawable.ic_notification) { page = "notifications" }
                     } }
-                    item("personalization") { SettingsSection(stringResource(R.string.personalization)) {
-                        SettingsLink(stringResource(R.string.appearance), stringResource(R.string.appearance_caption), R.drawable.ic_eyedropper) { page = "appearance" }
-                        SettingsLink(stringResource(R.string.language), stringResource(R.string.language_caption), R.drawable.ic_language) { page = "language" }
-                        SettingsLink(stringResource(R.string.haptics_settings), stringResource(R.string.haptics_caption), R.drawable.ic_vibration) { page = "haptics" }
-                    } }
                     item("data-app") { SettingsSection(stringResource(R.string.app_settings)) {
-                        SettingsLink(stringResource(R.string.performance_mode), stringResource(R.string.performance_caption), R.drawable.ic_performance) { page = "performance" }
+                        SettingsLink(stringResource(R.string.appearance), stringResource(R.string.appearance_caption), R.drawable.ic_eyedropper) { page = "appearance" }
                         SettingsLink(stringResource(R.string.data_transfer), stringResource(R.string.data_transfer_caption), R.drawable.ic_diary) { page = "data" }
                         SettingsLink(stringResource(R.string.about), stringResource(R.string.about_caption), R.drawable.ic_info) { page = "about" }
                     } }
@@ -130,6 +127,8 @@ fun SettingsScreen(diary: DiaryViewModel) {
                 }
                 } }
                 "appearance" -> item("appearance") { SettingsSection(null) {
+                Text(stringResource(R.string.language), style = MaterialTheme.typography.titleSmall)
+                LanguageButton(Modifier.fillMaxWidth(), diary::setLanguage)
                 ThemePreviews(diary)
                 SettingSwitch(stringResource(R.string.new_dock), state.newDock) { diary.setNewDock(it) }
                 Text(stringResource(R.string.new_dock_info), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -145,18 +144,10 @@ fun SettingsScreen(diary: DiaryViewModel) {
                     AccentCircle(stringResource(R.string.custom_color), state.palette != "dynamic" && accents.none { state.palette.equals(it.hex, true) },
                         { customColor = true }, MaterialTheme.colorScheme.primaryContainer, eyedropper = true)
                 }
+                SettingSwitch(stringResource(R.string.vibration), state.hapticsEnabled) { diary.setHaptics(it) }
+                SettingSwitch(stringResource(R.string.performance_mode), state.performanceMode) { diary.setPerformanceMode(it) }
+                Text(stringResource(R.string.performance_mode_info), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } }
-                "language" -> item("language") { SettingsSection(null) { LanguageButton(Modifier.fillMaxWidth(), diary::setLanguage) } }
-                "haptics" -> item("haptics") { SettingsSection(null) {
-                    SettingSwitch(stringResource(R.string.vibration), state.hapticsEnabled) { diary.setHaptics(it) }
-                    Text(stringResource(R.string.haptics_info), style = MaterialTheme.typography.bodySmall)
-                } }
-                "performance" -> {
-                    item("performance") { SettingsSection(null) {
-                        SettingSwitch(stringResource(R.string.performance_mode), state.performanceMode) { diary.setPerformanceMode(it) }
-                        Text(stringResource(R.string.performance_mode_info), style = MaterialTheme.typography.bodySmall)
-                    } }
-                }
                 "notifications" -> item("notifications") { SettingsSection(null) { NotificationSettings(diary) } }
                 "data" -> item("data") { SettingsSection(null) { BackupSettings(diary) } }
             }
@@ -236,7 +227,7 @@ private fun ThemePreviews(diary: DiaryViewModel) {
 private fun AccentCircle(label: String, selected: Boolean, onClick: () -> Unit, color: Color = Color.Transparent, brush: Brush? = null, eyedropper: Boolean = false) {
     val interaction = remember { MutableInteractionSource() }
     val feedback = LocalEverisHaptics.current
-    Column(Modifier.width(68.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(Modifier.width(84.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Surface(onClick = { feedback?.select(); onClick() }, modifier = Modifier.size(52.dp).pressFeedback(interaction).semantics { contentDescription = label; this.selected = selected },
             shape = CircleShape, interactionSource = interaction, color = Color.Transparent,
             border = BorderStroke(if (selected) 2.dp else 0.dp, if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)) {
@@ -316,11 +307,14 @@ private fun SettingSwitch(label: String, checked: Boolean, enabled: Boolean = tr
     val interaction = remember { MutableInteractionSource() }
     val shape = MaterialTheme.shapes.large
     val colors = SwitchDefaults.colors()
-    val motion = MaterialTheme.motionScheme.fastEffectsSpec<Color>()
-    val track by animateColorAsState(if (checked) colors.checkedTrackColor else colors.uncheckedTrackColor, motion, label = "switch track")
-    val thumb by animateColorAsState(if (checked) colors.checkedThumbColor else colors.uncheckedThumbColor, motion, label = "switch thumb")
-    val border by animateColorAsState(if (checked) colors.checkedBorderColor else colors.uncheckedBorderColor, motion, label = "switch outline")
-    val icon by animateColorAsState(if (checked) colors.checkedIconColor else colors.uncheckedIconColor, motion, label = "switch icon")
+    // Only the checked-state fraction animates here. Theme roles already share one global
+    // transition; starting another color animation would make switches trail behind the UI.
+    val fraction by animateFloatAsState(if (checked) 1f else 0f,
+        MaterialTheme.motionScheme.fastEffectsSpec(), label = "switch selection")
+    val track = lerp(colors.uncheckedTrackColor, colors.checkedTrackColor, fraction)
+    val thumb = lerp(colors.uncheckedThumbColor, colors.checkedThumbColor, fraction)
+    val border = lerp(colors.uncheckedBorderColor, colors.checkedBorderColor, fraction)
+    val icon = lerp(colors.uncheckedIconColor, colors.checkedIconColor, fraction)
     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(shape)
         .toggleable(value = checked, enabled = enabled, role = Role.Switch,
             interactionSource = interaction, indication = ripple(),
@@ -352,13 +346,17 @@ private fun TimeSettingDialog(initial: LocalTime, title: String, onDismiss: () -
     var minute by rememberSaveable { mutableIntStateOf(initial.minute) }
     val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() < 480.dp } || LocalConfiguration.current.fontScale > 1.4f
     val rows = if (compact) 3 else 5
+    val wheelTextStyle = if (LocalConfiguration.current.fontScale > 1.4f) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.headlineMedium
+    val wheelText = rememberTextMeasurer(cacheSize = 2).measure("00", style = wheelTextStyle)
+    val rowHeight = with(LocalDensity.current) { wheelText.size.height.toDp() + 8.dp }.coerceAtLeast(48.dp)
     EverisAlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = {
-        Box(Modifier.fillMaxWidth()) {
-            Surface(Modifier.fillMaxWidth().height(48.dp).align(Alignment.Center), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primaryContainer) { }
+        BoxWithConstraints(Modifier.fillMaxWidth().heightIn(max = rowHeight * rows)) {
+            val fittingRows = (maxHeight / rowHeight).toInt().coerceIn(1, rows).let { if (it % 2 == 0) it - 1 else it }
+            Surface(Modifier.fillMaxWidth().height(rowHeight).align(Alignment.Center), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primaryContainer) { }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                TimeWheel(24, initial.hour, rows, stringResource(R.string.hours_label), Modifier.weight(1f)) { hour = it }
+                TimeWheel(24, initial.hour, fittingRows, rowHeight, stringResource(R.string.hours_label), Modifier.weight(1f)) { hour = it }
                 Text(":", style = MaterialTheme.typography.headlineMedium)
-                TimeWheel(60, initial.minute, rows, stringResource(R.string.minutes_label), Modifier.weight(1f)) { minute = it }
+                TimeWheel(60, initial.minute, fittingRows, rowHeight, stringResource(R.string.minutes_label), Modifier.weight(1f)) { minute = it }
             }
         }
     }, confirmButton = { EverisTextButton(onClick = { onSave(LocalTime.of(hour, minute)) }) { Text(stringResource(R.string.save)) } },
@@ -366,7 +364,7 @@ private fun TimeSettingDialog(initial: LocalTime, title: String, onDismiss: () -
 }
 
 @Composable
-private fun TimeWheel(count: Int, initial: Int, rows: Int, label: String, modifier: Modifier, onSelected: (Int) -> Unit) {
+private fun TimeWheel(count: Int, initial: Int, rows: Int, rowHeight: androidx.compose.ui.unit.Dp, label: String, modifier: Modifier, onSelected: (Int) -> Unit) {
     val list = rememberLazyListState(initialFirstVisibleItemIndex = 500 * count + initial)
     val scope = rememberCoroutineScope()
     fun center(): Int = list.layoutInfo.let { info ->
@@ -388,11 +386,11 @@ private fun TimeWheel(count: Int, initial: Int, rows: Int, label: String, modifi
         }
     }
     val largeFont = LocalConfiguration.current.fontScale > 1.4f
-    LazyColumn(state = list, flingBehavior = fling, contentPadding = PaddingValues(vertical = ((rows - 1) * 24).dp),
-        modifier = modifier.height((rows * 48).dp).semantics { contentDescription = label; stateDescription = selected.toString() }) {
+    LazyColumn(state = list, flingBehavior = fling, contentPadding = PaddingValues(vertical = rowHeight * ((rows - 1) / 2)),
+        modifier = modifier.height(rowHeight * rows).semantics { contentDescription = label; stateDescription = selected.toString() }) {
         items(count * 1000) { index ->
             val value = index % count
-            Box(Modifier.fillMaxWidth().height(48.dp).clickable { scope.launch { list.animateScrollToItem(index) } }, contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().height(rowHeight).clickable { scope.launch { list.animateScrollToItem(index) } }, contentAlignment = Alignment.Center) {
                 Text(String.format(Locale.ROOT, "%02d", value), style = if (largeFont) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.headlineMedium,
                     fontWeight = if (selected == value) FontWeight.Bold else FontWeight.Normal,
                     color = if (selected == value) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .5f))

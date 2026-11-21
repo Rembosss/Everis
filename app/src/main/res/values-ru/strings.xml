@@ -49,7 +49,7 @@
     <string name="study_total">Учёба: %1$s</string>
     <string name="break_total">Перерывы: %1$s</string>
     <string name="allow_notifications">Разрешить уведомления</string>
-    <string name="appearance">Оформление</string>
+    <string name="appearance">Интерфейс</string>
     <string name="background_timing_info">Время задается по часам устройства. Android может задержать фоновую работу в режиме сна. Ошибка проверки никогда не означает отсутствие изменений.</string>
     <string name="bedtime_check">Проверять перед сном</string>
     <string name="bedtime_time">Время вечерней проверки</string>
@@ -218,22 +218,16 @@
     <string name="no_link_handler">Не найдено приложение для открытия ссылки.</string>
     <string name="subgroup_teacher_heading">Подгруппа %1$s</string>
     <string name="study_schedule_settings">Группа и расписание</string>
-    <string name="personalization">Оформление и поведение</string>
     <string name="notification_settings_caption">Проверки расписания и напоминания о заданиях</string>
-    <string name="appearance_caption">Тема и цвета</string>
+    <string name="appearance_caption">Язык, тема, цвета и эффекты</string>
     <string name="data_transfer">Перенос данных</string>
     <string name="data_transfer_caption">Копии и обмен расписанием</string>
     <string name="about_caption">Версия, обновления и контакты</string>
-    <string name="haptics_settings">Тактильный отклик</string>
-    <string name="vibration">Вибрация</string>
-    <string name="haptics_info">Мягкий отклик при выборе, переключении настроек и прокрутке времени. Учитывает системные настройки вибрации.</string>
-    <string name="language_caption">Язык интерфейса</string>
+    <string name="vibration">Тактильная отдача</string>
     <string name="app_settings">Приложение</string>
     <string name="homework_repeat_info">Ежедневно — напоминать каждый день в течение выбранного срока. Иначе — за указанное число дней и за день до занятия.</string>
     <string name="github_profile_unavailable">Не удалось проверить профиль</string>
     <string name="github_profile_unavailable_body">Попробуйте открыть профиль в браузере. Если страница недоступна, свяжитесь с разработчиком в Telegram.</string>
-    <string name="haptics_caption">Отклик на действия</string>
-    <string name="performance_caption">Анимации и тяжёлые эффекты</string>
     <string name="project_repository">GitHub-репозиторий</string>
     <string name="university">Вуз</string>
     <string name="university_rsue">РГЭУ (РИНХ)</string>
@@ -254,4 +248,9 @@
     <string name="new_dock">Новый вид дока</string>
     <string name="new_dock_info">Компактная плавающая панель поверх содержимого.</string>
     <string name="section_root_action">В начало раздела</string>
+    <string name="university_sfedu">ЮФУ (ИКТИБ)</string>
+    <string name="university_iubip">Южный университет (ИУБиП)</string>
+    <string name="university_rgups">РГУПС</string>
+    <string name="rgups_cycle_notice">Очная форма. Даты текущей и следующей недели рассчитаны по циклу «над / под чертой» на сайте. Проверьте актуальность расписания в вузе.</string>
+    <string name="rgups_vpn_notice">С VPN расписание РГУПС может не загружаться. На время проверки отключите VPN или добавьте Everis либо домен www.rgups.ru в исключения VPN.</string>
 </resources>

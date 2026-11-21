@@ -22,7 +22,7 @@ fun GroupChangeDialog(diary: DiaryViewModel) {
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             UniversitySelector(diary) { query = ""; selectedId = null; subgroup = "" }
             GroupSearch(query, selected, state, { query = it; selectedId = null },
-            { query = it.name; selectedId = it.id; subgroup = "" }, diary::loadGroups, subgroup, { subgroup = it }) } },
+            { query = it.name; selectedId = it.id; subgroup = "" }, diary::loadGroups, onSearchQuery = diary::searchGroups, subgroup = subgroup, onSubgroup = { subgroup = it }) } },
         confirmButton = {
             EverisTextButton(onClick = { selected?.let { diary.chooseGroup(it, subgroup) } },
                 enabled = selected != null && selected != state.group && !state.saving && !state.groupPreviewLoading &&

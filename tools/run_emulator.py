@@ -15,7 +15,10 @@ parser.add_argument('--avd', default='Diary_API_37')
 parser.add_argument('--port', type=int, default=5554)
 parser.add_argument('--package', default='org.everis.app.debug')
 parser.add_argument('--headless', action='store_true')
+parser.add_argument('--memory-mb', type=int, help='Temporary emulator RAM override; preserves the AVD configuration')
 args = parser.parse_args()
+if args.memory_mb is not None and not 1024 <= args.memory_mb <= 8192:
+    parser.error('--memory-mb must be between 1024 and 8192')
 if args.boot_only and args.clear_data:
     parser.error('--boot-only cannot clear application data')
 if args.port < 5554 or args.port > 5682 or args.port % 2:
@@ -38,7 +41,7 @@ status = command('get-state')
 process = None
 if status.returncode != 0:
     with (log_directory / 'emulator-window.log').open('ab') as log:
-        process = subprocess.Popen([str(sdk / 'emulator/emulator'), '-avd', args.avd, '-port', str(args.port), '-gpu', 'swiftshader', '-no-snapshot', '-no-boot-anim'] + (['-no-window'] if args.headless else []),
+        process = subprocess.Popen([str(sdk / 'emulator/emulator'), '-avd', args.avd, '-port', str(args.port), '-gpu', 'swiftshader', '-no-snapshot', '-no-boot-anim'] + (['-no-window'] if args.headless else []) + (['-memory', str(args.memory_mb)] if args.memory_mb is not None else []),
                                    stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     print('Emulator starting, PID', process.pid, flush=True)
 for _ in range(120):

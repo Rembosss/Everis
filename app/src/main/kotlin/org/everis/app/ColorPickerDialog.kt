@@ -82,7 +82,7 @@ fun ColorPickerDialog(initial: String, onDismiss: () -> Unit, onColor: (String) 
                         android.graphics.Color.colorToHSV(text.toColorInt(), hsv)
                         hue = hsv[0]; saturation = hsv[1]; brightness = hsv[2]
                     }
-                }, label = { Text("HEX") }, placeholder = { Text("#RRGGBB") }, singleLine = true, isError = !valid)
+                }, label = { Text("HEX") }, placeholder = { Text("#RRGGBB") }, singleLine = true, shape = EverisInputShape, colors = everisFieldColors(), isError = !valid)
             }
         },
         confirmButton = { EverisTextButton(onClick = { if (valid) onColor(text) }, enabled = valid) { Text(stringResource(R.string.save)) } },

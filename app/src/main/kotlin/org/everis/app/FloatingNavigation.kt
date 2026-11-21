@@ -1,6 +1,5 @@
 package org.everis.app
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -15,9 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -25,7 +24,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 /** A transparent overlay; one full-height capsule follows taps and optional horizontal scrubbing. */
@@ -34,6 +35,9 @@ fun FloatingNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (I
     val items = listOf(R.string.home to R.drawable.ic_home, R.string.disciplines to R.drawable.ic_disciplines,
         R.string.timetable to R.drawable.ic_calendar_agenda, R.string.settings to R.drawable.ic_settings)
     val efficient = LocalPerformanceMode.current
+    val labels = items.map { stringResource(it.first) }
+    val measurer = rememberTextMeasurer(cacheSize = 16)
+    val density = LocalDensity.current
     val haptics = LocalEverisHaptics.current
     var scrubPosition by remember { mutableStateOf<Float?>(null) }
     var lastTick by remember { mutableIntStateOf(selected) }
@@ -41,16 +45,26 @@ fun FloatingNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (I
     val rootAction = stringResource(R.string.section_root_action)
     val position by animateFloatAsState(scrubPosition ?: selected.toFloat(),
         if (efficient) tween(130) else spring(dampingRatio = 1f, stiffness = if (scrubPosition != null) 1000f else 480f, visibilityThreshold = .001f), label = "dock capsule")
-    Box(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
         Surface(Modifier.widthIn(max = 340.dp).fillMaxWidth(), shape = CircleShape,
             color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 4.dp, shadowElevation = 3.dp) {
-            BoxWithConstraints(Modifier.height(58.dp)) {
+            BoxWithConstraints {
                 val width = maxWidth / items.size
-                val cellPixels = with(LocalDensity.current) { width.toPx() }
+                val cellPixels = with(density) { width.toPx() }
+                val availableLabelWidth = with(density) { (width - 8.dp).roundToPx() }
+                val regularStyle = MaterialTheme.typography.labelSmall
+                val compactStyle = regularStyle.copy(fontSize = 10.sp, lineHeight = 14.sp)
+                val regularSizes = labels.map { measurer.measure(it, style = regularStyle, softWrap = false).size }
+                val compactSizes = labels.map { measurer.measure(it, style = compactStyle, softWrap = false).size }
+                val regularFits = regularSizes.all { it.width <= availableLabelWidth }
+                val showLabels = regularFits || compactSizes.all { it.width <= availableLabelWidth }
+                val labelStyle = if (regularFits) regularStyle else compactStyle
+                val textHeight = with(density) { (if (regularFits) regularSizes else compactSizes).maxOf { it.height }.toDp() }
+                val dockHeight = if (showLabels) maxOf(58.dp, 24.dp + textHeight + 12.dp) else 58.dp
                 // Translate the entire state layer instead of relaying out or crossfading two pills.
-                Surface(Modifier.width(width).fillMaxHeight().graphicsLayer { translationX = cellPixels * position },
+                Surface(Modifier.width(width).height(dockHeight).graphicsLayer { translationX = cellPixels * position },
                     shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {}
-                Row(Modifier.fillMaxSize().selectableGroup().pointerInput(cellPixels) {
+                Row(Modifier.fillMaxWidth().height(dockHeight).selectableGroup().pointerInput(cellPixels) {
                     detectHorizontalDragGestures(
                         onDragStart = { point -> scrubPosition = (point.x / cellPixels - .5f).coerceIn(0f, 3f); lastTick = scrubPosition!!.roundToInt() },
                         onHorizontalDrag = { change, _ ->
@@ -65,8 +79,10 @@ fun FloatingNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (I
                 }) {
                     items.forEachIndexed { index, (title, icon) ->
                         val source = remember { MutableInteractionSource() }
-                        val color by animateColorAsState(if (selected == index) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            MaterialTheme.motionScheme.fastEffectsSpec(), label = "dock tint")
+                        val selectedFraction by animateFloatAsState(if (selected == index) 1f else 0f,
+                            MaterialTheme.motionScheme.fastEffectsSpec(), label = "dock selection")
+                        val color = lerp(MaterialTheme.colorScheme.onSurfaceVariant,
+                            MaterialTheme.colorScheme.onSecondaryContainer, selectedFraction)
                         Column(Modifier.weight(1f).fillMaxHeight().clip(CircleShape)
                             .semantics { this.selected = selected == index }
                             .combinedClickable(role = Role.Tab, interactionSource = source, indication = null,
@@ -75,8 +91,8 @@ fun FloatingNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (I
                                 onLongClick = if (selected == index) ({ onSectionRoot(index) }) else null),
                             verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(painterResource(icon), stringResource(title), Modifier.size(22.dp).pressFeedback(source), tint = color)
-                            if (LocalConfiguration.current.fontScale <= 1.4f)
-                                Text(stringResource(title), Modifier.padding(start = 4.dp, end = 4.dp, top = 2.dp), style = MaterialTheme.typography.labelSmall,
+                            if (showLabels)
+                                Text(labels[index], Modifier.padding(start = 4.dp, end = 4.dp, top = 2.dp), style = labelStyle,
                                     color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
@@ -91,26 +107,38 @@ fun FloatingNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (I
 fun ClassicNavigation(selected: Int, onSelect: (Int) -> Unit, onSectionRoot: (Int) -> Unit) {
     val items = listOf(R.string.home to R.drawable.ic_home, R.string.disciplines to R.drawable.ic_disciplines,
         R.string.timetable to R.drawable.ic_calendar_agenda, R.string.settings to R.drawable.ic_settings)
+    val labels = items.map { stringResource(it.first) }
+    val measurer = rememberTextMeasurer(cacheSize = 16)
     val rootAction = stringResource(R.string.section_root_action)
     NavigationBar {
-        items.forEachIndexed { index, (title, icon) ->
+      BoxWithConstraints(Modifier.fillMaxWidth().height(80.dp)) {
+        val cell = maxWidth / items.size
+        val available = with(LocalDensity.current) { (cell - 8.dp).roundToPx() }
+        val regular = MaterialTheme.typography.labelSmall
+        val compact = regular.copy(fontSize = 10.sp, lineHeight = 14.sp)
+        val regularFits = labels.all { measurer.measure(it, style = regular, softWrap = false).size.width <= available }
+        val showLabels = regularFits || labels.all { measurer.measure(it, style = compact, softWrap = false).size.width <= available }
+        Row(Modifier.fillMaxSize().selectableGroup()) {
+          items.forEachIndexed { index, (title, icon) ->
             val source = remember { MutableInteractionSource() }
             val active = selected == index
-            val tint by animateColorAsState(if (active) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                MaterialTheme.motionScheme.fastEffectsSpec(), label = "classic navigation tint")
-            val fill by animateColorAsState(if (active) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent,
-                MaterialTheme.motionScheme.fastEffectsSpec(), label = "classic navigation indicator")
-            Column(Modifier.weight(1f).height(80.dp).semantics { this.selected = active }
+            val selectedFraction by animateFloatAsState(if (active) 1f else 0f,
+                MaterialTheme.motionScheme.fastEffectsSpec(), label = "classic navigation selection")
+            val tint = lerp(MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.onSecondaryContainer, selectedFraction)
+            val fill = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = selectedFraction)
+            Column(Modifier.weight(1f).fillMaxHeight().semantics { this.selected = active }
                 .combinedClickable(role = Role.Tab, interactionSource = source, indication = null, hapticFeedbackEnabled = false,
                     onClick = { onSelect(index) }, onLongClickLabel = if (active) rootAction else null,
                     onLongClick = if (active) ({ onSectionRoot(index) }) else null),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Surface(Modifier.size(width = 64.dp, height = 32.dp), shape = CircleShape, color = fill) {
-                    Box(contentAlignment = Alignment.Center) { Icon(painterResource(icon), stringResource(title), Modifier.size(24.dp).pressFeedback(source), tint = tint) }
+                Surface(Modifier.size(width = minOf(64.dp, cell - 8.dp), height = 32.dp), shape = CircleShape, color = fill) {
+                    Box(contentAlignment = Alignment.Center) { Icon(painterResource(icon), labels[index], Modifier.size(24.dp).pressFeedback(source), tint = tint) }
                 }
-                if (LocalConfiguration.current.fontScale <= 1.4f)
-                    Text(stringResource(title), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (showLabels)
+                    Text(labels[index], Modifier.padding(top = 4.dp), style = if (regularFits) regular else compact, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+          }
         }
+      }
     }
 }

@@ -46,8 +46,10 @@ class NavigationPolicyTest {
             assertEquals(0, restoreSelectedTab(saved))
     }
     @Test fun removedSettingsCategoryRestoresToARealPage() {
-        assertEquals("language", restoreSettingsPage("general"))
+        assertEquals("root", restoreSettingsPage("general"))
         assertEquals("root", restoreSettingsPage("removed"))
-        assertEquals("haptics", restoreSettingsPage("haptics"))
+        assertEquals("appearance", restoreSettingsPage("language"))
+        assertEquals("appearance", restoreSettingsPage("performance"))
+        assertEquals("appearance", restoreSettingsPage("haptics"))
     }
 }

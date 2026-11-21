@@ -49,7 +49,7 @@
     <string name="study_total">Оқу: %1$s</string>
     <string name="break_total">Үзілістер: %1$s</string>
     <string name="allow_notifications">Хабарландыруларға рұқсат беру</string>
-    <string name="appearance">Сыртқы көрініс</string>
+    <string name="appearance">Интерфейс</string>
     <string name="background_timing_info">Уақыт құрылғы сағатына сәйкес. Android ұйқы режимінде фондық жұмысты кешіктіруі мүмкін. Тексеру қатесі өзгерістер жоқ дегенді білдірмейді.</string>
     <string name="bedtime_check">Ұйқы алдында тексеру</string>
     <string name="bedtime_time">Кешкі тексеру уақыты</string>
@@ -214,22 +214,16 @@
     <string name="no_link_handler">Сілтемені ашатын қолданба табылмады.</string>
     <string name="subgroup_teacher_heading">%1$s кіші тобы</string>
     <string name="study_schedule_settings">Топ және сабақ кестесі</string>
-    <string name="personalization">Безендіру және жұмыс тәртібі</string>
     <string name="notification_settings_caption">Кестені тексеру және тапсырма еске салғыштары</string>
-    <string name="appearance_caption">Тақырып және түстер</string>
+    <string name="appearance_caption">Тіл, тақырып, түстер және әсерлер</string>
     <string name="data_transfer">Деректерді тасымалдау</string>
     <string name="data_transfer_caption">Сақтық көшірмелер және кестемен бөлісу</string>
     <string name="about_caption">Нұсқа, жаңартулар және байланыс</string>
-    <string name="haptics_settings">Тактильді жауап</string>
-    <string name="vibration">Діріл</string>
-    <string name="haptics_info">Таңдау, параметрлерді ауыстыру және уақытты айналдыру кезінде жеңіл жауап береді. Жүйенің діріл параметрлерін ескереді.</string>
-    <string name="language_caption">Интерфейс тілі</string>
+    <string name="vibration">Тактильді жауап</string>
     <string name="app_settings">Қолданба</string>
     <string name="homework_repeat_info">Күнделікті режимде таңдалған мерзім бойы күн сайын еске салады. Әйтпесе, көрсетілген күн саны қалғанда және сабаққа бір күн қалғанда еске салады.</string>
     <string name="github_profile_unavailable">Профильді тексеру мүмкін болмады</string>
     <string name="github_profile_unavailable_body">Профильді браузерде ашып көріңіз. Бет қолжетімсіз болса, әзірлеушімен Telegram арқылы байланысыңыз.</string>
-    <string name="haptics_caption">Әрекеттерге жауап</string>
-    <string name="performance_caption">Анимациялар және күрделі әсерлер</string>
     <string name="project_repository">GitHub репозиторийі</string>
     <string name="university">ЖОО</string>
     <string name="university_rsue">РМЭУ (РИНХ)</string>
@@ -250,4 +244,9 @@
     <string name="new_dock">Панельдің жаңа көрінісі</string>
     <string name="new_dock_info">Мазмұнның үстіндегі ықшам қалқымалы панель.</string>
     <string name="section_root_action">Бөлімнің басына өту</string>
+    <string name="university_sfedu">ОФУ (ИКТИБ)</string>
+    <string name="university_iubip">Оңтүстік университеті (ИУБиП)</string>
+    <string name="university_rgups">РГУПС</string>
+    <string name="rgups_cycle_notice">Күндізгі оқу. Осы және келесі аптаның күндері сайттағы кезектесетін апталар циклі бойынша есептелген. Кестенің өзектілігін университеттен нақтылаңыз.</string>
+    <string name="rgups_vpn_notice">VPN қосулы кезде РГУПС кестесі жүктелмеуі мүмкін. Тексеру кезінде VPN желісін өшіріңіз немесе Everis қолданбасын не www.rgups.ru доменін VPN ерекшеліктеріне қосыңыз.</string>
 </resources>

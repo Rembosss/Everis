@@ -17,8 +17,14 @@ import java.time.format.ResolverStyle
 
 data class StudentGroup(val id: String, val name: String, val university: String = "rsue") {
     init {
-        require(university in setOf("rsue", "dstu"))
-        require(if (university == "dstu") id.matches(Regex("dstu:[1-9][0-9]{0,11}")) else !id.startsWith("dstu:"))
+        require(university in UniversitySources.universities)
+        require(when (university) {
+            "dstu" -> id.matches(Regex("dstu:[1-9][0-9]{0,11}"))
+            "sfedu" -> id.startsWith("sfedu:") && SfeduData.isUuid(id.removePrefix("sfedu:"))
+            "iubip" -> id == IubipData.groupId(name)
+            "rgups" -> RgupsData.validId(id)
+            else -> listOf("dstu:", "sfedu:", "iubip:", "rgups:").none(id::startsWith)
+        })
     }
 }
 data class PublishedSchedule(val group: String, val days: Set<LocalDate>, val lessons: List<Lesson>, val university: String = "rsue") {
@@ -84,7 +90,7 @@ class RsueData {
             val root = JSONObject(raw)
             require(root.getString("kind") == expectedKind && root.getString("instance") == group)
             val source = root.optString("source", "rsue")
-            require(source == "rsue" || source == "dstu")
+            require(source in UniversitySources.universities)
             val days = linkedSetOf<LocalDate>()
             val lessons = linkedMapOf<String, Lesson>()
             val weeks = root.getJSONArray("weeks")
@@ -128,16 +134,20 @@ class RsueData {
                             lessons[id] = Lesson(id, subject.lowercase(), subject,
                                 date.atTime(start).atZone(zone),
                                 (if (end <= start) date.plusDays(1) else date).atTime(end).atZone(zone),
-                                type, listOfNotNull(entry.optJSONObject("teacher")?.optString("name")?.takeIf { it.isNotBlank() }),
+                                type, entry.optJSONArray("teachers")?.let { teachers ->
+                                    require(teachers.length() <= 100)
+                                    (0 until teachers.length()).map { teachers.getString(it).trim().also { name -> require(name.length in 1..180) } }.distinct()
+                                } ?: listOfNotNull(entry.optJSONObject("teacher")?.optString("name")?.takeIf { it.isNotBlank() }),
                                 building, (if (source == "rsue") audience.replace(Regex("[*#&]"), "") else audience).trim().ifEmpty { null },
+                                cancelled = entry.optBoolean("cancelled"),
                                 subgroup = entry.optJSONObject("subgroup")?.takeIf { it.optInt("id") != 0 }
                                     ?.optString("name")?.trim()?.takeIf { it.isNotBlank() && it != "null" },
-                                studentGroups = if (expectedKind == "Teacher") listOfNotNull(entry.optString("group").takeIf { it.isNotBlank() }) else emptyList())
+                                studentGroups = if (expectedKind == "Teacher") listOfNotNull(entry.optString("group").takeIf { it.isNotBlank() && it != "null" }) else emptyList())
                         }
                     }
                 }
             }
-            require(days.isNotEmpty() || (source == "dstu" && root.optBoolean("empty")))
+            require(days.isNotEmpty() || (source in setOf("dstu", "sfedu") && root.optBoolean("empty")))
             return PublishedSchedule(group, days, lessons.values.sortedBy { it.start }, source)
         }
     }

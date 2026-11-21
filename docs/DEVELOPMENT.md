@@ -12,7 +12,7 @@ cd Everis
 ./gradlew :app:assembleDebug
 ```
 
-Debug APK: `Releases/0.2-beta/Debug/Everis-0.2-beta-arm64-v8a-debug.apk`. It uses package `org.everis.app.debug` and your local Android debug signing key. The app requires Android 12/API 31 or newer and an ARM64 device. Both Debug and Release APKs target only `arm64-v8a`; x86 emulator images need native ARM translation to install them.
+Debug APK: `Releases/0.3-beta/Debug/Everis-0.3-beta-arm64-v8a-debug.apk`. It uses package `org.everis.app.debug` and your local Android debug signing key. The app requires Android 12/API 31 or newer and an ARM64 device. Both Debug and Release APKs target only `arm64-v8a`; x86 emulator images need native ARM translation to install them.
 
 ## Checks
 
@@ -21,7 +21,7 @@ Debug APK: `Releases/0.2-beta/Debug/Everis-0.2-beta-arm64-v8a-debug.apk`. It use
 python3 tools/check_resources.py
 ```
 
-The core modules use executable check tasks rather than discovered JUnit tests. The 0.2-beta application snapshot passed 136 app JUnit tests, 59 domain checks, 10 source checks and 14 security checks. Resource validation covers 244 keys in five languages. See [verification](VERIFICATION.md).
+The core modules provide executable check tasks. See [verification](VERIFICATION.md) for the release build and prior test results.
 
 ## Release signing
 

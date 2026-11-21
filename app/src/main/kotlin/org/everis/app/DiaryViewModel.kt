@@ -134,6 +134,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = DiaryRepository.get(application)
     val teacherRepository = org.everis.app.data.TeacherRepository(application)
     private var groupsJob: kotlinx.coroutines.Job? = null
+    private var groupQuery: Pair<String, String>? = null
     private var catalogChosen = false
     private var writes = 0
     private var refreshing = false
@@ -150,6 +151,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private var indexedCourses = emptyList<Pair<String, String>>()
     private var indexedLessons = emptyMap<String, List<Lesson>>()
     private var indexedTeachers = emptyList<String>()
+    private val preferenceEdits = PreferenceEdits()
+    private var lastCommittedState: DiaryState? = null
+    private var lastObservedRaw: String? = null
 
     init {
         viewModelScope.launch {
@@ -209,14 +213,17 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                             homework = homework, history = json.scheduleHistory(),
                             notifications = notificationPreferences(json), tasksForReview = tasksForReview)
                     }
-                    state = saved.copy(groupsLoading = state.groupsLoading, groupsFailed = state.groupsFailed,
+                    lastCommittedState = saved
+                    lastObservedRaw = raw
+                    state = preferenceEdits.reconcile(saved.copy(groupsLoading = state.groupsLoading, groupsFailed = state.groupsFailed,
                         catalogUniversity = if (catalogChosen) state.catalogUniversity else saved.group?.university ?: "rsue",
                         scheduleLoading = state.scheduleLoading, scheduleFailed = state.scheduleFailed,
                         changingGroup = state.changingGroup, requestedDay = state.requestedDay,
                         languageRequest = state.languageRequest, homeworkRequest = state.homeworkRequest,
                         previewGroupId = state.previewGroupId, previewSubgroups = state.previewSubgroups,
                         groupPreviewLoading = state.groupPreviewLoading, groupPreviewFailed = state.groupPreviewFailed,
-                        saving = writes > 0, saveFailed = state.saveFailed, backgroundFailed = state.backgroundFailed)
+                        saving = writes > 0, saveFailed = state.saveFailed, backgroundFailed = state.backgroundFailed),
+                        latest = raw == repository.snapshots.value)
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { state = state.copy(loaded = true, storageFailed = true) }
             }
@@ -273,16 +280,31 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadGroups() {
         if (state.groupsLoading || state.storageFailed) return
+        requestGroups("", false)
+    }
+
+    fun searchGroups(query: String) {
+        if (!UniversitySources.remoteSearch(state.catalogUniversity) || state.storageFailed) return
+        val normalized = query.trim().take(80)
+        if (groupQuery == (state.catalogUniversity to normalized) && !state.groupsFailed) return
+        requestGroups(normalized, true)
+    }
+
+    private fun requestGroups(query: String, debounce: Boolean) {
         val university = state.catalogUniversity
+        groupQuery = university to query
+        groupsJob?.cancel()
         state = state.copy(groupsLoading = true, groupsFailed = false)
         groupsJob = viewModelScope.launch {
             try {
-                val groups = withContext(Dispatchers.IO) { UniversitySources.groups(university) }
+                if (debounce) kotlinx.coroutines.delay(350)
+                val groups = withContext(Dispatchers.IO) { UniversitySources.groups(university, query) }
                 repository.update { json ->
                     val previous = json.optJSONArray("groups") ?: JSONArray()
-                    val retained = (0 until previous.length()).map { studentGroup(previous.getJSONObject(it)) }.filter { it.university != university }
+                    val retained = (0 until previous.length()).map { studentGroup(previous.getJSONObject(it)) }
+                        .filter { UniversitySources.remoteSearch(university) || it.university != university }
                     val selected = json.selectedGroup()
-                    val directory = (retained + groups + listOfNotNull(selected)).distinctBy { it.id }
+                    val directory = (listOfNotNull(selected) + groups + retained).distinctBy { it.id }.take(30_000)
                     json.put("groups", JSONArray().apply { directory.forEach { put(it.toJson()) } })
                 }
                 if (state.catalogUniversity == university) state = state.copy(groupsLoading = false)
@@ -360,22 +382,22 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     fun setPalette(value: String) {
         require(value == "dynamic" || Regex("#[0-9a-fA-F]{6}").matches(value))
         if (value == state.palette) return
-        mutate({ it.put("palette", value) })
+        mutate({ it.put("palette", value) }, optimistic = { it.copy(palette = value) })
     }
     fun setTheme(value: String) { require(value in listOf("system", "light", "dark")); mutate({
         it.put("themeMode", value); if (value == "light") it.put("blackTheme", false)
-    }) }
-    fun setBlackTheme(value: Boolean) = mutate({ it.put("blackTheme", value) })
-    fun setHaptics(value: Boolean) = mutate({ it.put("hapticsEnabled", value) })
-    fun setNewDock(value: Boolean) = mutate({ it.put("newDock", value) })
-    fun setPerformanceMode(value: Boolean) = mutate({ it.put("performanceMode", value) })
+    }, optimistic = { it.copy(themeMode = value, blackTheme = it.blackTheme && value != "light") }) }
+    fun setBlackTheme(value: Boolean) = mutate({ it.put("blackTheme", value) }, optimistic = { it.copy(blackTheme = value) })
+    fun setHaptics(value: Boolean) = mutate({ it.put("hapticsEnabled", value) }, optimistic = { it.copy(hapticsEnabled = value) })
+    fun setNewDock(value: Boolean) = mutate({ it.put("newDock", value) }, optimistic = { it.copy(newDock = value) })
+    fun setPerformanceMode(value: Boolean) = mutate({ it.put("performanceMode", value) }, optimistic = { it.copy(performanceMode = value) })
     fun setOnlyMySubgroup(value: Boolean) {
         require(!value || state.subgroup.isNotBlank())
         mutate({ json ->
             json.put("onlyMySubgroup", value)
             val current = notificationPreferences(json)
             json.put("notifications", current.copy(generation = current.generation + 1).toJson())
-        }) { configureNotifications(repository.read(), replaceDaily = true); configureHomework(repository.read()) }
+        }, optimistic = { it.copy(onlyMySubgroup = value) }) { configureNotifications(repository.read(), replaceDaily = true); configureHomework(repository.read()) }
     }
     fun setLanguage(code: String) {
         require(appLanguages.any { it.code == code })
@@ -390,7 +412,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             json.put("subgroup", value); if (value.isBlank()) json.put("onlyMySubgroup", false)
             val current = notificationPreferences(json)
             json.put("notifications", current.copy(generation = current.generation + 1).toJson())
-        }) { configureNotifications(repository.read(), replaceDaily = true); configureHomework(repository.read()) }
+        }, optimistic = { it.copy(subgroup = value, onlyMySubgroup = it.onlyMySubgroup && value.isNotBlank()) }) {
+            configureNotifications(repository.read(), replaceDaily = true); configureHomework(repository.read())
+        }
     }
     fun addHomeworkAfter(lesson: Lesson) {
         state = state.copy(homeworkRequest = HomeworkRequest(lesson.disciplineId, lesson.disciplineName, lesson.end.toInstant()))
@@ -416,7 +440,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         mutate({ json ->
             val current = notificationPreferences(json)
             json.put("notifications", transform(current).copy(generation = current.generation + 1).toJson())
-        }) { configureNotifications(repository.read(), replaceDaily = true) }
+        }, optimistic = { it.copy(notifications = transform(it.notifications)) }) { configureNotifications(repository.read(), replaceDaily = true) }
     }
 
     fun refreshSchedule(explicitGroup: StudentGroup? = null, silent: Boolean = false) {
@@ -533,17 +557,30 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
         catch (_: Exception) { state = state.copy(backgroundFailed = true) }
     }
 
-    private fun mutate(change: (JSONObject) -> Unit, after: suspend () -> Unit = {}) {
+    private fun mutate(change: (JSONObject) -> Unit, optimistic: ((DiaryState) -> DiaryState)? = null,
+        after: suspend () -> Unit = {}) {
         if (state.storageFailed) return
+        val edit = optimistic?.let(preferenceEdits::begin)
+        if (edit != null) state = preferenceEdits.preview(state)
         writes++
         state = state.copy(saving = true, saveFailed = false)
         viewModelScope.launch {
-            try { repository.update(change); after() }
+            var persisted = false
+            try { repository.update(change); persisted = true; after() }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 state = state.copy(saveFailed = true)
                 Log.e("Everis", "Local change failed; original snapshot preserved")
-            } finally { writes--; state = state.copy(saving = writes > 0) }
+            } finally {
+                if (edit != null) {
+                    preferenceEdits.complete(edit, persisted)
+                    lastCommittedState?.let { saved ->
+                        val confirmed = preferenceEdits.reconcile(saved, latest = lastObservedRaw == repository.snapshots.value)
+                        state = state.withPreferencesFrom(confirmed)
+                    }
+                }
+                writes--; state = state.copy(saving = writes > 0)
+            }
         }
     }
 }

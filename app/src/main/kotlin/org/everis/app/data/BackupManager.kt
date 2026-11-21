@@ -20,15 +20,16 @@ object BackupPayload {
         keys.forEach { if (source.has(it)) payload.put(it, source.get(it)) }
         payload.optJSONObject("notifications")?.remove("generation")
         val catalog = source.optJSONArray("groups") ?: org.json.JSONArray()
-        val multisource = source.selectedGroup()?.university == "dstu" || (0 until catalog.length()).any { studentGroup(catalog.getJSONObject(it)).university == "dstu" }
-        return JSONObject().put("format", "everis-backup").put("version", if (multisource) 2 else 1).put("created", Instant.now().toString())
+        val providers = (0 until catalog.length()).map { studentGroup(catalog.getJSONObject(it)).university } + listOfNotNull(source.selectedGroup()?.university)
+        val version = if (providers.any { it !in setOf("rsue", "dstu") }) 3 else if ("dstu" in providers) 2 else 1
+        return JSONObject().put("format", "everis-backup").put("version", version).put("created", Instant.now().toString())
             .put("payload", payload).toString().toByteArray(Charsets.UTF_8)
     }
 
     fun validate(bytes: ByteArray): JSONObject {
         require(bytes.size in 1..SnapshotBackup.MAX_PLAINTEXT_BYTES)
         val root = portableJson(bytes)
-        require(root.optString("format") == "everis-backup" && root.optInt("version") in 1..2)
+        require(root.optString("format") == "everis-backup" && root.optInt("version") in 1..3)
         val original = root.getJSONObject("payload")
         val value = JSONObject()
         keys.forEach { if (original.has(it)) value.put(it, original.get(it)) }
@@ -142,14 +143,14 @@ object SchedulePayload {
         val group = requireNotNull(snapshot.selectedGroup())
         val raw = snapshot.getString("schedule")
         parseStudentSchedule(raw, group)
-        return JSONObject().put("format", "everis-schedule").put("version", if (group.university == "dstu") 2 else 1)
+        return JSONObject().put("format", "everis-schedule").put("version", when (group.university) { "rsue" -> 1; "dstu" -> 2; else -> 3 })
             .put("created", Instant.now().toString()).put("group", group.toJson())
             .put("schedule", raw).toString().toByteArray(Charsets.UTF_8)
     }
     fun validate(bytes: ByteArray): JSONObject {
         require(bytes.size in 1..SnapshotBackup.MAX_PLAINTEXT_BYTES)
         val value = portableJson(bytes)
-        require(value.optString("format") == "everis-schedule" && value.optInt("version") in 1..2)
+        require(value.optString("format") == "everis-schedule" && value.optInt("version") in 1..3)
         val group = requireNotNull(value.selectedGroup())
         require(group.id.isNotBlank() && group.id.length <= 200 && group.name.isNotBlank() && group.name.length <= 200)
         require(parseStudentSchedule(value.getString("schedule"), group).lessons.size <= 50_000)

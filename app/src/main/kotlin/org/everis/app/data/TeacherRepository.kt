@@ -31,7 +31,7 @@ class TeacherRepository(context: Context) {
         if (rows.length() > 30_000) return emptyList()
         return (0 until rows.length()).mapNotNull { i -> runCatching {
             val row = rows.getJSONObject(i)
-            val id = row.getString("id").also { require(it.matches(Regex("[1-9][0-9]{0,11}"))) }
+            val id = row.getString("id").also { require(UniversitySources.validTeacherId(university, it)) }
             val sourceName = row.getString("sourceName").also { require(it.length in 3..180) }
             val name = row.getString("name").also { require(it.length in 3..180) }
             TeacherRef(id, sourceName, name, university)
@@ -46,11 +46,22 @@ class TeacherRepository(context: Context) {
             loadCatalog(university)
         }
     }
+    /** Query-limited public directories accumulate matches for later offline search. */
+    fun searchCatalog(university: String, query: String): List<TeacherRef> {
+        if (!UniversitySources.remoteSearch(university)) return refreshCatalog(university)
+        return synchronized(catalogLocks.computeIfAbsent(university) { Any() }) {
+            val found = UniversitySources.teachers(university, query.trim().take(180))
+            saveCatalog(university, (found + cachedCatalog(university)).distinctBy { it.id }.take(30_000).sortedBy { it.name })
+        }
+    }
     private fun loadCatalog(university: String): List<TeacherRef> {
         val list = UniversitySources.teachers(university).map { teacher ->
             if (university == "rsue") teacher.copy(name = TeacherNames.resolve(teacher.sourceName, rsueIndex)) else teacher
         }.sortedBy { it.name }
         require(list.isNotEmpty())
+        return saveCatalog(university, list)
+    }
+    private fun saveCatalog(university: String, list: List<TeacherRef>): List<TeacherRef> {
         val rows = JSONArray()
         list.forEach { rows.put(JSONObject().put("id", it.id).put("sourceName", it.sourceName).put("name", it.name)) }
         write("catalog-$university.json", rows.toString())
@@ -59,7 +70,7 @@ class TeacherRepository(context: Context) {
         return list
     }
     private fun scheduleFile(teacher: TeacherRef): String {
-        require(teacher.university in UniversitySources.universities && teacher.id.matches(Regex("[0-9]{1,12}")))
+        require(UniversitySources.validTeacherId(teacher.university, teacher.id))
         return "schedule-${teacher.university}-${teacher.id}.json"
     }
     fun cachedSchedule(teacher: TeacherRef): PublishedSchedule? = read(scheduleFile(teacher))?.let { raw ->

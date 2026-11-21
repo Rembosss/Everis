@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.everis.app.data.*
 import org.everis.core.*
@@ -61,26 +60,32 @@ fun TimetableScreen(diary: DiaryViewModel) {
     fun back() { if (selectedId != null) selectedId = null else searching = false }
     OnSectionReset { selectedId = null; searching = false }
     BackHandler(active && searching && currentSource) { back() }
-    LaunchedEffect(searching, university, retry) {
+    LaunchedEffect(searching, university, retry, if (org.everis.app.data.UniversitySources.remoteSearch(university)) query.trim() else "") {
         if (!searching || !currentSource) return@LaunchedEffect
         loading = true; failed = false
         teachers = withContext(Dispatchers.IO) { diary.teacherRepository.cachedCatalog(university) }
         try {
-            teachers = withContext(Dispatchers.IO) { diary.teacherRepository.refreshCatalog(university, force = retry > 0) }
+            val remote = org.everis.app.data.UniversitySources.remoteSearch(university)
+            if (remote && query.isNotBlank()) delay(350)
+            teachers = withContext(Dispatchers.IO) {
+                if (remote) diary.teacherRepository.searchCatalog(university, query)
+                else diary.teacherRepository.refreshCatalog(university, force = retry > 0)
+            }
             diary.refreshTeacherNames()
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { failed = true }
         finally { loading = false }
     }
-    val route = if (!searching || !currentSource) "calendar" else selectedId?.let { "teacher:$it" } ?: "search"
+    val teacherSupported = org.everis.app.data.UniversitySources.supportsTeacherTimetable(university)
+    val route = if (!searching || !currentSource || !teacherSupported) "calendar" else selectedId?.let { "teacher:$it" } ?: "search"
     AnimatedContent(route, label = "timetable destination", modifier = Modifier.fillMaxSize().clipToBounds().background(MaterialTheme.colorScheme.background),
         transitionSpec = { screenTransition(if (targetState == "calendar" || (targetState == "search" && initialState.startsWith("teacher:"))) -1 else 1, diary.state.performanceMode) }) { page ->
       pages.SaveableStateProvider(if (page.startsWith("teacher:")) "$university:$page" else page) {
         when {
             page == "calendar" -> Column(Modifier.fillMaxSize()) {
-                EverisTonalButton(onClick = { searching = true }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
+                if (teacherSupported) EverisTonalButton(onClick = { searching = true }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
                     Icon(painterResource(R.drawable.ic_disciplines), null, Modifier.size(19.dp)); Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.teacher_timetable))
+                    Text(stringResource(R.string.teacher_timetable), style = if (LocalConfiguration.current.fontScale > 1.3f) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
                 }
                 Box(Modifier.weight(1f)) { CalendarScreen(diary) }
             }
@@ -114,7 +119,7 @@ private fun TeacherSearch(university: String, query: String, onQuery: (String) -
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         EverisPageHeading(stringResource(R.string.teacher_timetable), onBack)
         Text(stringResource(R.string.university_source, universityName(university)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedTextField(query, { onQuery(it.take(180)) }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+        OutlinedTextField(query, { onQuery(it.take(180)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = EverisInputShape, colors = everisFieldColors(),
             label = { Text(stringResource(R.string.teacher_name_hint)) })
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (failed) Row(verticalAlignment = Alignment.CenterVertically) {
@@ -152,7 +157,6 @@ private fun TeacherDetail(diary: DiaryViewModel, teacher: TeacherRef, onBack: ()
 
 @Composable
 private fun TeacherDays(teacher: TeacherRef, schedule: PublishedSchedule?, loading: Boolean, failed: Boolean, onRetry: () -> Unit, onBack: () -> Unit) {
-    val scope = rememberCoroutineScope()
     val efficient = LocalPerformanceMode.current
     val locale = uiLocale(LocalConfiguration.current)
     val now = rememberLiveInstant(1000)
@@ -161,9 +165,10 @@ private fun TeacherDays(teacher: TeacherRef, schedule: PublishedSchedule?, loadi
     val base = LocalDate.parse(baseText)
     val center = 36525
     val pager = rememberPagerState(initialPage = center, pageCount = { center * 2 + 1 })
-    val selected = base.plusDays((pager.targetPage - center).toLong())
+    val navigation = rememberDirectPagerNavigation(pager)
+    val selected = base.plusDays((navigation.selectedPage - center).toLong())
     val lessons = schedule?.lessons.orEmpty()
-    fun show(day: LocalDate) { scope.launch { pager.animateScrollToPage((center + ChronoUnit.DAYS.between(base, day)).toInt().coerceIn(0, center * 2)) } }
+    fun show(day: LocalDate) { navigation.navigate((center + ChronoUnit.DAYS.between(base, day)).toInt(), efficient) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val headerLimit = (maxHeight * .6f).coerceAtLeast(180.dp)
         Column(Modifier.fillMaxSize()) {
@@ -171,7 +176,7 @@ private fun TeacherDays(teacher: TeacherRef, schedule: PublishedSchedule?, loadi
                 Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         EverisIconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.back)) }
-                        AnimatedContent(selected, label = "teacher date", transitionSpec = { headingTransition(if (targetState >= initialState) 1 else -1, efficient) }) { date ->
+                        AnimatedContent(selected, modifier = Modifier.weight(1f).clipToBounds(), label = "teacher date", transitionSpec = { headingTransition(if (targetState >= initialState) 1 else -1, efficient) }) { date ->
                             Text(date.format(DateTimeFormatter.ofPattern("d MMMM · EEEE", locale)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         }
                     }
@@ -190,8 +195,8 @@ private fun TeacherDays(teacher: TeacherRef, schedule: PublishedSchedule?, loadi
                     WeekStrip(selected, lessons, schedule?.days.orEmpty(), ::show)
                 }
             }
-            HorizontalPager(pager, modifier = Modifier.weight(1f)) { page ->
-                val date = base.plusDays((page - center).toLong())
+            HorizontalPager(pager, modifier = Modifier.weight(1f), userScrollEnabled = !navigation.bridging) { page ->
+                val date = base.plusDays((navigation.contentPage(page) - center).toLong())
                 val daily = remember(date, lessons) { lessonsForDay(date, RsueData.zone, lessons) }
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = LocalNavigationClearance.current + 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (daily.isEmpty() && !loading) item {
@@ -215,7 +220,7 @@ private fun TeacherDays(teacher: TeacherRef, schedule: PublishedSchedule?, loadi
             }
         }
         AnimatedVisibility(selected != today, Modifier.align(Alignment.BottomEnd).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 12.dp), enter = fadeIn(), exit = fadeOut()) {
-            FloatingActionButton(onClick = { show(today) }) { Text(stringResource(R.string.today), Modifier.padding(horizontal = 16.dp)) }
+            FloatingActionButton(onClick = { show(today) }) { Icon(painterResource(R.drawable.ic_calendar_agenda), stringResource(R.string.today)) }
         }
     }
 }

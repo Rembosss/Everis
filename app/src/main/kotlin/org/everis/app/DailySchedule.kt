@@ -17,9 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
@@ -29,7 +30,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import org.everis.app.data.RsueData
 import org.everis.core.*
 import java.time.Duration
@@ -40,20 +40,22 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 private const val CENTER_DAY = 36525
+private data class DailyHeading(val day: LocalDate, val group: String, val summary: DaySummary)
 
 @Composable
 fun DailySchedule(diary: DiaryViewModel) {
+  BoxWithConstraints(Modifier.fillMaxSize()) {
     val state = diary.state
     val zone = RsueData.zone
     val motion = MaterialTheme.motionScheme
-    val scope = rememberCoroutineScope()
     val locale = uiLocale(LocalConfiguration.current)
     val baseDate by rememberSaveable { mutableStateOf(LocalDate.now(zone).toString()) }
     val base = LocalDate.parse(baseDate)
     val pager = rememberPagerState(initialPage = CENTER_DAY, pageCount = { CENTER_DAY * 2 + 1 })
+    val navigation = rememberDirectPagerNavigation(pager)
     // A programmatic week jump may skip intermediate pages. Headers follow the
     // destination, rather than restarting their animation for each skipped date.
-    val selectedDay = base.plusDays((pager.targetPage - CENTER_DAY).toLong())
+    val selectedDay = base.plusDays((navigation.selectedPage - CENTER_DAY).toLong())
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var draft by rememberSaveable { mutableStateOf("") }
     var originalText by rememberSaveable { mutableStateOf("") }
@@ -68,25 +70,24 @@ fun DailySchedule(diary: DiaryViewModel) {
     val today by remember { derivedStateOf { dayClock.value.atZone(zone).toLocalDate() } }
     val allLessons = state.schedule?.lessons.orEmpty()
     val publishedDays = state.schedule?.days.orEmpty()
-    val windowHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val selectedHeading = remember(selectedDay, state.group?.name, allLessons, publishedDays) {
+        DailyHeading(selectedDay, state.group?.name.orEmpty(), summarizeDay(selectedDay, zone,
+            allLessons, dayCoverage(selectedDay, publishedDays, allLessons, zone)))
+    }
+    val windowHeight = maxHeight
     val largeFont = LocalConfiguration.current.fontScale > 1.4f
-    val compact = windowHeight < 560.dp || largeFont
-    val tinyWindow = windowHeight < 460.dp && largeFont
+    val compact = windowHeight < 620.dp || maxWidth < 360.dp || largeFont
+    val tinyWindow = windowHeight < 460.dp
     val compactScroll = rememberScrollState()
     var showDailyTotals by rememberSaveable { mutableStateOf(false) }
-    var navigationTarget by remember { mutableIntStateOf(pager.currentPage) }
-    val navigationJob = remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     fun navigate(page: Int) {
         if (editingId != null) return
-        navigationTarget = page.coerceIn(0, CENTER_DAY * 2)
-        navigationJob.value?.cancel()
-        navigationJob.value = scope.launch { pager.animateScrollToPage(navigationTarget, animationSpec = motion.defaultSpatialSpec()) }
+        navigation.navigate(page, state.performanceMode)
     }
     fun navigateDate(day: LocalDate) { navigate(CENTER_DAY + ChronoUnit.DAYS.between(base, day).toInt()) }
-    fun switchWeek(offset: Long) { navigateDate(weekStart(base.plusDays((navigationTarget - CENTER_DAY).toLong())).plusWeeks(offset)) }
+    fun switchWeek(offset: Long) { navigateDate(weekStart(selectedDay).plusWeeks(offset)) }
     OnSectionReset { if (!state.saving) { editingId = null; navigateDate(today) } }
     LaunchedEffect(pager.settledPage) {
-        navigationTarget = pager.settledPage
         if (pager.settledPage != lastSettledPage) { editingId = null; lastSettledPage = pager.settledPage }
     }
     LaunchedEffect(state.group?.id) {
@@ -115,15 +116,21 @@ fun DailySchedule(diary: DiaryViewModel) {
             Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                 shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
-                    AnimatedContent(selectedDay, label = "date and daily totals", transitionSpec = {
-                        headingTransition(if (targetState > initialState) 1 else -1, state.performanceMode)
-                    }) { day ->
-                        val summary = remember(day, allLessons, publishedDays) { summarizeDay(day, zone, allLessons, dayCoverage(day, publishedDays, allLessons, zone)) }
+                    AnimatedContent(selectedHeading, modifier = Modifier.fillMaxWidth().clipToBounds(), label = "date and daily totals", transitionSpec = {
+                        headingTransition(if (targetState.day >= initialState.day) 1 else -1, state.performanceMode).using(
+                            SizeTransform(clip = false) { _, _ -> androidx.compose.animation.core.tween(
+                                if (state.performanceMode) 0 else 320, easing = androidx.compose.animation.core.FastOutSlowInEasing) })
+                    }) { heading ->
+                        val day = heading.day
+                        val summary = heading.summary
                         Column {
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 if (compact) {
                                     EverisTextButton(onClick = { showDailyTotals = true }, modifier = Modifier.weight(1f)) {
-                                        Text(day.format(DateTimeFormatter.ofPattern("d MMM", locale)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                                      Column(horizontalAlignment = Alignment.Start) {
+                                            Text(day.format(DateTimeFormatter.ofPattern("d MMM", locale)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                                            Text(heading.group, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                                      }
                                         Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.padding(start = 4.dp).size(18.dp))
                                     }
                                     EverisIconButton(onClick = { switchWeek(-1) }) { Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.previous_week)) }
@@ -135,7 +142,7 @@ fun DailySchedule(diary: DiaryViewModel) {
                             }
                             if (!compact) Text(day.format(DateTimeFormatter.ofPattern("EEEE", locale)).replaceFirstChar { it.titlecase(locale) },
                                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            if (!compact) Text(state.group?.name.orEmpty(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            if (!compact) Text(heading.group, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                             if (!compact) FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(stringResource(R.string.study_total, compactDuration(summary.teaching)), style = MaterialTheme.typography.bodySmall)
                                 Text(stringResource(R.string.break_total, compactDuration(summary.breaks)), style = MaterialTheme.typography.bodySmall)
@@ -143,6 +150,8 @@ fun DailySchedule(diary: DiaryViewModel) {
                             }
                         }
                     }
+                    if (state.group?.university == "rgups") Text(stringResource(R.string.rgups_cycle_notice),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.large) {
                         LiveStatus(allLessons, publishedDays)
@@ -155,7 +164,7 @@ fun DailySchedule(diary: DiaryViewModel) {
                             Icon(painterResource(R.drawable.ic_chevron_left), previous)
                         }
                         val week = weekStart(selectedDay)
-                        AnimatedContent(week, label = "week range", transitionSpec = {
+                        AnimatedContent(week, modifier = Modifier.clipToBounds(), label = "week range", transitionSpec = {
                             headingTransition(if (targetState > initialState) 1 else -1, state.performanceMode)
                         }) { displayedWeek ->
                             Text(displayedWeek.format(DateTimeFormatter.ofPattern("d MMM", locale)) + " – " + displayedWeek.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM", locale)),
@@ -171,20 +180,18 @@ fun DailySchedule(diary: DiaryViewModel) {
             }
         }
         HorizontalPager(state = pager, modifier = if (tinyWindow) Modifier.height(windowHeight * .85f).fillMaxWidth() else Modifier.weight(1f).fillMaxWidth(),
-            userScrollEnabled = editingId == null,
+            userScrollEnabled = editingId == null && !navigation.bridging,
             flingBehavior = PagerDefaults.flingBehavior(pager, snapAnimationSpec = motion.defaultSpatialSpec())) { page ->
-            val day = base.plusDays((page - CENTER_DAY).toLong())
+            val day = base.plusDays((navigation.contentPage(page) - CENTER_DAY).toLong())
             val lessons = remember(day, allLessons) { lessonsForDay(day, zone, allLessons) }
             val confirmed = remember(day, allLessons, publishedDays) { dayCoverage(day, publishedDays, allLessons, zone).complete }
-            DayPage(day, lessons, confirmed, diary, onEdit = { lesson ->
+            key(day) { DayPage(day, lessons, confirmed, diary, onEdit = { lesson ->
                 lastEditedLesson = lesson; editingId = lesson.id; editingSubject = lesson.disciplineName
                 editingDisciplineId = lesson.disciplineId; originalText = state.tasks[lesson.id].orEmpty(); draft = originalText
-            })
+            }) }
         }
     }
-    AnimatedVisibility(editingId != null, modifier = Modifier.fillMaxSize(),
-        enter = fadeIn(motion.defaultEffectsSpec()) + slideInVertically(motion.defaultSpatialSpec()) { it / 12 },
-        exit = fadeOut(motion.defaultEffectsSpec()) + slideOutVertically(motion.defaultSpatialSpec()) { it / 12 }) {
+    HomeworkEditorLayer(editingId != null, modifier = Modifier.matchParentSize()) {
         val lesson = allLessons.firstOrNull { it.id == editingId } ?: lastEditedLesson
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             if (lesson != null) LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -192,8 +199,7 @@ fun DailySchedule(diary: DiaryViewModel) {
                     active = lesson.start.toLocalDate() == today && Instant.now() >= lesson.start.toInstant() && Instant.now() < lesson.end.toInstant(),
                     onNext = {}, onEdit = {}, onComplete = { diary.completeTask(lesson.id, it) }) }
                 item("editor") {
-                    OutlinedTextField(draft, { draft = it.take(20_000) }, label = { Text(stringResource(R.string.task_hint)) },
-                        minLines = 5, maxLines = 10, modifier = Modifier.fillMaxWidth())
+                    HomeworkInput(draft, { draft = it.take(20_000) }, minLines = 5, maxLines = 10)
                 }
                 item("actions") {
                     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -215,7 +221,9 @@ fun DailySchedule(diary: DiaryViewModel) {
     AnimatedVisibility(selectedDay != today && editingId == null, modifier = Modifier.align(Alignment.BottomEnd).padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = LocalNavigationClearance.current + 12.dp),
         enter = fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec(), initialScale = .88f),
         exit = fadeOut(motion.fastEffectsSpec()) + scaleOut(motion.fastSpatialSpec(), targetScale = .88f)) {
-        ExtendedFloatingActionButton(onClick = { navigateDate(today) }) { Text(stringResource(R.string.today)) }
+        if (compact) FloatingActionButton(onClick = { navigateDate(today) }) {
+            Icon(painterResource(R.drawable.ic_calendar_agenda), stringResource(R.string.today))
+        } else ExtendedFloatingActionButton(onClick = { navigateDate(today) }) { Text(stringResource(R.string.today)) }
     }
     }
     if (showDailyTotals) {
@@ -232,13 +240,14 @@ fun DailySchedule(diary: DiaryViewModel) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.editor_recovery_info), style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = recoveryDraft.orEmpty(), onValueChange = { recoveryDraft = it.take(20_000) }, minLines = 3, maxLines = 8)
+                HomeworkInput(value = recoveryDraft.orEmpty(), onValueChange = { recoveryDraft = it.take(20_000) }, minLines = 3, maxLines = 8)
             }
         },
         confirmButton = { EverisTextButton(onClick = {
             diary.saveTaskForReview(recoveryId, editingSubject, recoveryDraft.orEmpty()) { recoveryDraft = null }
         }, enabled = !state.saving && !recoveryDraft.isNullOrBlank()) { Text(stringResource(R.string.save)) } },
         dismissButton = { EverisTextButton(onClick = { recoveryDraft = null }, enabled = !state.saving) { Text(stringResource(R.string.cancel)) } })
+  }
 }
 
 @Composable
@@ -262,8 +271,9 @@ private fun DayPage(day: LocalDate, lessons: List<Lesson>, confirmed: Boolean, d
                 if (next != null) EverisTonalButton(onClick = { diary.requestDay(next) }) { Text(stringResource(R.string.next_study_day)) }
             }
         }
-    } else LazyColumn(state = listState, modifier = Modifier.fillMaxSize().immediateListEdge(listState), overscrollEffect = null,
-        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 12.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    } else LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp)
+            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)).immediateListEdge(listState), overscrollEffect = null,
+        contentPadding = PaddingValues(top = 12.dp, bottom = LocalNavigationClearance.current + 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.scheduleLoading && lessons.isEmpty()) item("loading") { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(stringResource(R.string.loading_schedule), style = MaterialTheme.typography.bodySmall) }
         if (state.scheduleFailed) item("error") { Text(stringResource(R.string.schedule_error), color = MaterialTheme.colorScheme.error) }
         items(lessons, key = { it.id }) { lesson ->
@@ -291,7 +301,7 @@ private fun LessonCard(lesson: Lesson, task: String, complete: Boolean, editing:
                 Text("${lesson.start.toLocalTime()} – ${lesson.end.toLocalTime()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(stringResource(lessonTypeLabel(lesson.type)), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
             }
-            Text(lesson.disciplineName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(lesson.disciplineName, style = MaterialTheme.typography.titleMedium.copy(hyphens = androidx.compose.ui.text.style.Hyphens.Auto), fontWeight = FontWeight.SemiBold)
             Text(lesson.teachers.joinToString("\n").ifEmpty { stringResource(R.string.no_teacher) }, style = MaterialTheme.typography.bodySmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 lesson.building?.let { Text(stringResource(R.string.building, it), style = MaterialTheme.typography.bodySmall) }
@@ -307,7 +317,7 @@ private fun LessonCard(lesson: Lesson, task: String, complete: Boolean, editing:
             }
             AnimatedVisibility(!editing, enter = fadeIn(motion.defaultEffectsSpec()) + expandVertically(motion.defaultSpatialSpec()),
                 exit = fadeOut(motion.defaultEffectsSpec()) + shrinkVertically(motion.defaultSpatialSpec())) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), maxItemsInEachRow = if (LocalConfiguration.current.fontScale > 1.3f) 1 else 2) {
                     EverisTonalButton(onClick = onEdit, modifier = Modifier.weight(1f)) {
                         Text(stringResource(if (task.isBlank()) R.string.add_task else R.string.edit_task), style = MaterialTheme.typography.labelMedium)
                     }

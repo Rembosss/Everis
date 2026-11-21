@@ -32,9 +32,9 @@ private fun hapticClick(onClick: () -> Unit): () -> Unit {
     val source = remember { MutableInteractionSource() }
     Button(onClick = hapticClick(onClick), shapes = ButtonDefaults.shapes(), modifier = modifier, enabled = enabled, interactionSource = source, content = content)
 }
-@Composable fun EverisOutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
+@Composable fun EverisOutlinedButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, colors: ButtonColors? = null, content: @Composable RowScope.() -> Unit) {
     val source = remember { MutableInteractionSource() }
-    OutlinedButton(onClick = hapticClick(onClick), shapes = ButtonDefaults.shapes(), modifier = modifier, enabled = enabled, interactionSource = source, content = content)
+    OutlinedButton(onClick = hapticClick(onClick), shapes = ButtonDefaults.shapes(), colors = colors ?: ButtonDefaults.outlinedButtonColors(), modifier = modifier, enabled = enabled, interactionSource = source, content = content)
 }
 @Composable fun EverisTonalButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
     val source = remember { MutableInteractionSource() }

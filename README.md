@@ -6,7 +6,7 @@
 
 A free Android university diary with offline timetables, homework and local reminders, built with Material 3 Expressive.
 
-**Latest release: 0.2-beta (build 10).** See [release notes](docs/CHANGELOG.md). This beta is intended for testing and feedback. **0.3-beta is in development.**
+**Everis 0.3-beta (build 16)** is available for Android 12 and later. [Release notes](docs/CHANGELOG_0.3_BETA.md)
 
 ### Features
 
@@ -21,7 +21,7 @@ A free Android university diary with offline timetables, homework and local remi
 - Light, dark and black themes, Monet dynamic colors and custom accents.
 - Russian, Ukrainian, Belarusian, Kazakh and English interfaces.
 
-Public timetable adapters support Rostov State University of Economics (RSUE/RINH) and Don State Technical University (DSTU). Other universities are planned. Everis is not an official university app or service.
+Student timetables are available for RSUE (RINH), DSTU, SFedU ICTIS, RGUPS and Southern University (IMBL). Teacher search covers RSUE, DSTU and SFedU ICTIS. Everis uses public university sources. [Coverage by university](docs/PUBLIC_SOURCES_0.3.md)
 
 ### Privacy
 
@@ -31,7 +31,7 @@ Timetables, homework and preferences are stored on your device. Everis has no ap
 
 Android 12 or newer. **ARM64 (`arm64-v8a`) only**, for both debug and release builds. ARMv7 and x86_64 are not supported.
 
-Download the signed [ARM64 Release APK](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Package: `org.everis.app`. Android requires user confirmation to install updates.
+Download the signed [ARM64 Release APK](https://github.com/Rembosss/Everis/releases/download/0.3-beta/Everis-0.3-beta-arm64-v8a-release.apk) from [Releases](https://github.com/Rembosss/Everis/releases/tag/0.3-beta). Package: `org.everis.app`. Android requires user confirmation to install updates.
 
 ### Build from source
 
@@ -66,7 +66,7 @@ This project was made possible by donors, plenty of caffeine, Codex, and good mu
 
 Свободный электронный дневник для Android: расписание вуза, домашние задания и локальные напоминания в интерфейсе Material 3 Expressive.
 
-**Последний релиз: 0.2-beta (сборка 10).** Изменения — в [changelog](docs/CHANGELOG.md). Бета предназначена для тестирования и обратной связи. **В разработке — 0.3-beta.**
+**Everis 0.3-beta (сборка 16)** доступна для Android 12 и новее. [Что нового](docs/CHANGELOG_0.3_BETA.md#русский)
 
 ### Возможности
 
@@ -81,7 +81,7 @@ This project was made possible by donors, plenty of caffeine, Codex, and good mu
 - Светлая, тёмная и чёрная темы, динамический акцент Monet и собственный цвет.
 - Русский, украинский, белорусский, казахский и английский языки.
 
-Подключены публичные источники РГЭУ (РИНХ) и ДГТУ. Поддержка других вузов планируется. Everis — самостоятельный проект, не официальный продукт и не сервис вуза.
+Расписания групп доступны для РГЭУ (РИНХ), ДГТУ, ИКТИБ ЮФУ, РГУПС и Южного университета (ИУБиП). Поиск преподавателей работает для РИНХ, ДГТУ и ИКТИБ ЮФУ. Everis использует открытые источники вузов. [Подробнее об источниках](docs/PUBLIC_SOURCES_0.3.md)
 
 ### Приватность
 
@@ -91,7 +91,7 @@ This project was made possible by donors, plenty of caffeine, Codex, and good mu
 
 Android 12 и новее. Единственная поддерживаемая архитектура — ARM64 (`arm64-v8a`), включая отладочные и релизные сборки. ARMv7 и x86_64 не поддерживаются.
 
-Подписанный [Release APK для ARM64](https://github.com/Rembosss/Everis/releases/download/0.2-beta/Everis-0.2-beta-arm64-v8a-release.apk) доступен в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.2-beta). Пакет: `org.everis.app`. Установка обновлений подтверждается пользователем средствами Android.
+Подписанный [Release APK для ARM64](https://github.com/Rembosss/Everis/releases/download/0.3-beta/Everis-0.3-beta-arm64-v8a-release.apk) доступен в [Releases](https://github.com/Rembosss/Everis/releases/tag/0.3-beta). Пакет: `org.everis.app`. Установка обновлений подтверждается пользователем средствами Android.
 
 ### Сборка из исходников
 

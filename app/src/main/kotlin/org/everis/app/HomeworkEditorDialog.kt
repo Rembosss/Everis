@@ -79,8 +79,7 @@ fun HomeworkEditorDialog(diary: DiaryViewModel, request: HomeworkRequest) {
                 Text(stringResource(R.string.append_existing_task), style = MaterialTheme.typography.bodySmall)
                 Text(expectedText, style = MaterialTheme.typography.bodySmall, maxLines = 4, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            OutlinedTextField(value = draft, onValueChange = { draft = it.take(20_000) }, modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.task_hint)) }, minLines = 4, maxLines = 8,
+            HomeworkInput(value = draft, onValueChange = { draft = it.take(20_000) }, minLines = 4, maxLines = 8,
                 isError = finalText.length > 20_000)
             if (finalText.length > 20_000) Text(stringResource(R.string.task_too_long), color = MaterialTheme.colorScheme.error)
             if (state.saveFailed) Text(stringResource(R.string.save_error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -90,7 +89,7 @@ fun HomeworkEditorDialog(diary: DiaryViewModel, request: HomeworkRequest) {
         diary.saveHomework(finalRequest, target, target?.start?.toLocalDate() ?: LocalDate.parse(dueText), finalText, expectedText, sourceTextAtOpen, diary::homeworkSaved)
     }, enabled = valid && !state.saving) { Text(stringResource(R.string.save)) } },
         dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (request.editTaskId != null) EverisTextButton(onClick = {
                     diary.deleteHomework(request.editTaskId, sourceTextAtOpen, diary::homeworkSaved)
                 }, enabled = !state.saving) { Text(stringResource(R.string.delete_task), color = MaterialTheme.colorScheme.error) }

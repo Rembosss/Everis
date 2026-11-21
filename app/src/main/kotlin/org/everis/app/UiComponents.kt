@@ -19,10 +19,20 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import androidx.compose.foundation.text.selection.TextSelectionColors
+
+/** Full rounding matches selector buttons. Homework keeps its separate multiline shape. */
+internal val EverisInputShape = RoundedCornerShape(percent = 50)
+
+@Composable
+internal fun everisFieldMinHeight() = with(LocalDensity.current) {
+    (MaterialTheme.typography.bodyLarge.lineHeight.toDp() + 32.dp).coerceAtLeast(56.dp)
+}
 
 /** Shared policy: every modal leaves the content below it softly blurred. */
 @Stable
@@ -71,6 +81,45 @@ fun EverisAlertDialog(
 
 data class MenuChoice<T>(val value: T, val label: String)
 
+@Composable
+internal fun everisFieldColors(
+    container: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    content: Color = MaterialTheme.colorScheme.onSurface,
+    outline: Color = MaterialTheme.colorScheme.outline,
+) = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = container,
+    unfocusedContainerColor = container,
+    focusedTextColor = content,
+    unfocusedTextColor = content,
+    cursorColor = MaterialTheme.colorScheme.primary,
+    selectionColors = TextSelectionColors(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = .32f)),
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = outline,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+)
+
+// The transparent Change group button sits on the settings section's surfaceContainerLow.
+@Composable
+internal fun groupButtonFieldColors() = everisFieldColors(
+    container = MaterialTheme.colorScheme.surfaceContainerLow,
+    content = ButtonDefaults.outlinedButtonColors().contentColor,
+    outline = MaterialTheme.colorScheme.outlineVariant,
+)
+
+/** The same rounded editor in the day screen, next-class dialog and recovery flow. */
+@Composable
+internal fun HomeworkInput(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier,
+    minLines: Int = 4, maxLines: Int = 8, isError: Boolean = false) {
+    val compact = visibleWindowHeight() < 440.dp
+    val minimum = if (compact) minLines.coerceAtMost(3) else minLines
+    val maximum = if (compact) maxLines.coerceAtMost(6).coerceAtLeast(minimum) else maxLines
+    OutlinedTextField(value, onValueChange, modifier = modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.task_hint)) }, minLines = minimum, maxLines = maximum,
+        isError = isError, shape = MaterialTheme.shapes.extraLarge,
+        colors = groupButtonFieldColors())
+}
+
 /** Use this selector for future setting/calendar/language menus as well. */
 @Composable
 fun <T> EverisSelect(
@@ -80,21 +129,20 @@ fun <T> EverisSelect(
     val feedback = LocalEverisHaptics.current
     var expanded by remember { mutableStateOf(false) }
     var anchorWidth by remember { mutableIntStateOf(0) }
-    val density = LocalDensity.current
     val arrow by animateFloatAsState(if (expanded) 180f else 0f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "menu arrow")
     // A menu belongs to its anchor; opening it must not blur/re-measure the anchor's dialog.
     Box(modifier) {
         EverisOutlinedButton(onClick = { expanded = !expanded }, enabled = enabled,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).onSizeChanged { anchorWidth = it.width }) {
-            Text(choices.firstOrNull { it.value == selected }?.label ?: placeholder, Modifier.weight(1f))
+            colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            modifier = Modifier.fillMaxWidth().heightIn(min = everisFieldMinHeight()).onSizeChanged { anchorWidth = it.width }) {
+            Text(choices.firstOrNull { it.value == selected }?.label ?: placeholder, Modifier.weight(1f),
+                maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             Icon(painterResource(R.drawable.ic_expand_more), null, Modifier.padding(start = 12.dp).rotate(arrow))
         }
-        DropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false },
-            modifier = Modifier.width(with(density) { anchorWidth.toDp() }).heightIn(max = 360.dp),
-            shape = RoundedCornerShape(22.dp), containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 3.dp, shadowElevation = if (LocalPerformanceMode.current) 0.dp else 6.dp) {
+        AnchoredMenu(expanded = expanded && enabled, widthPx = anchorWidth, onDismiss = { expanded = false }) {
             choices.forEach { item ->
                 DropdownMenuItem(text = { Text(item.label) },
+                    colors = MenuDefaults.itemColors(textColor = ButtonDefaults.outlinedButtonColors().contentColor),
                     leadingIcon = { Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                         if (item.value == selected) Box(Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape))
                     } },

@@ -4,11 +4,12 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
+import java.net.URLEncoder
 import java.util.Locale
 import java.util.zip.GZIPInputStream
 
 sealed interface HttpResult {
-    data class Body(val bytes: ByteArray, val contentType: String?, val etag: String?, val lastModified: String?) : HttpResult
+    data class Body(val bytes: ByteArray, val contentType: String?, val etag: String?, val lastModified: String?, val statusCode: Int = 200) : HttpResult
     data object NotModified : HttpResult
     data class Failure(val kind: Kind, val statusCode: Int? = null) : HttpResult
     enum class Kind { DISALLOWED_URL, TOO_MANY_REDIRECTS, HTTP_ERROR, TOO_LARGE, UNSUPPORTED_ENCODING, NETWORK }
@@ -29,15 +30,34 @@ class PublicHttpClient(
         uri.fragment == null && (uri.port == -1 || uri.port == 443)
 
     // Blocking transport: invoke from the IO executor/coroutine, never the UI thread.
-    fun get(initial: URI, etag: String? = null, lastModified: String? = null): HttpResult {
+    fun get(initial: URI, etag: String? = null, lastModified: String? = null): HttpResult = request(initial, null, etag, lastModified)
+
+    /** Public search APIs may use POST for a read-only filter; no account credentials are sent. */
+    fun postJson(initial: URI, json: String): HttpResult {
+        val body = json.toByteArray(Charsets.UTF_8)
+        if (body.size > 64 * 1024) return HttpResult.Failure(HttpResult.Kind.TOO_LARGE)
+        return request(initial, body, null, null)
+    }
+
+    fun postForm(initial: URI, fields: Map<String, String>): HttpResult {
+        if (fields.size > 32) return HttpResult.Failure(HttpResult.Kind.TOO_LARGE)
+        val body = fields.entries.joinToString("&") { (key, value) ->
+            URLEncoder.encode(key, "UTF-8") + "=" + URLEncoder.encode(value, "UTF-8")
+        }.toByteArray(Charsets.UTF_8)
+        if (body.size > 64 * 1024) return HttpResult.Failure(HttpResult.Kind.TOO_LARGE)
+        return request(initial, body, null, null, "application/x-www-form-urlencoded; charset=utf-8")
+    }
+
+    private fun request(initial: URI, initialBody: ByteArray?, etag: String?, lastModified: String?, contentType: String = "application/json; charset=utf-8"): HttpResult {
         var uri = initial
+        var body = initialBody
         repeat(6) { redirect ->
             if (!allowed(uri)) return HttpResult.Failure(HttpResult.Kind.DISALLOWED_URL)
             val client = try { connection(uri) } catch (_: IOException) {
                 return HttpResult.Failure(HttpResult.Kind.NETWORK)
             }
             try {
-                client.requestMethod = "GET"
+                client.requestMethod = if (body == null) "GET" else "POST"
                 client.instanceFollowRedirects = false
                 client.connectTimeout = connectTimeoutMillis
                 client.readTimeout = readTimeoutMillis
@@ -49,6 +69,12 @@ class PublicHttpClient(
                 }
                 validator(etag)?.let { client.setRequestProperty("If-None-Match", it) }
                 validator(lastModified)?.let { client.setRequestProperty("If-Modified-Since", it) }
+                body?.let { bytes ->
+                    client.doOutput = true
+                    client.setRequestProperty("Content-Type", contentType)
+                    client.setFixedLengthStreamingMode(bytes.size)
+                    client.outputStream.use { it.write(bytes) }
+                }
                 val status = client.responseCode
                 if (status == 304) return HttpResult.NotModified
                 if (status in setOf(301, 302, 303, 307, 308)) {
@@ -58,6 +84,7 @@ class PublicHttpClient(
                     uri = try { uri.resolve(location) } catch (_: IllegalArgumentException) {
                         return HttpResult.Failure(HttpResult.Kind.DISALLOWED_URL)
                     }
+                    if (status == 303 || status == 301 || status == 302) body = null
                     return@repeat
                 }
                 if (status !in 200..299) return HttpResult.Failure(HttpResult.Kind.HTTP_ERROR, status)
@@ -78,7 +105,7 @@ class PublicHttpClient(
                             output.write(buffer, 0, count)
                         }
                         return HttpResult.Body(output.toByteArray(), client.contentType,
-                            client.getHeaderField("ETag"), client.getHeaderField("Last-Modified"))
+                            client.getHeaderField("ETag"), client.getHeaderField("Last-Modified"), status)
                     }
                 }
             } catch (_: IOException) {

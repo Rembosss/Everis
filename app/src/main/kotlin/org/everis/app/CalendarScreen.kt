@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -33,6 +34,8 @@ import java.time.format.TextStyle
 
 @Composable
 fun CalendarScreen(diary: DiaryViewModel) {
+    val compact = LocalConfiguration.current.fontScale > 1.3f || visibleWindowHeight() < 560.dp
+    var summaryExpanded by rememberSaveable { mutableStateOf(false) }
     val clock = rememberLiveInstant(60_000)
     val today by remember { derivedStateOf { clock.value.atZone(RsueData.zone).toLocalDate() } }
     var mode by rememberSaveable { mutableIntStateOf(0) }
@@ -51,7 +54,7 @@ fun CalendarScreen(diary: DiaryViewModel) {
                 Icon(painterResource(R.drawable.ic_chevron_left), previous)
             }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedContent(mode to anchorText, label = "calendar heading", transitionSpec = {
+                AnimatedContent(mode to anchorText, modifier = Modifier.fillMaxWidth().clipToBounds(), label = "calendar heading", transitionSpec = {
                     headingTransition(calendarDirection(initialState.first, initialState.second, targetState.first, targetState.second), efficient)
                 }) { (displayMode, dateText) ->
                     val date = LocalDate.parse(dateText)
@@ -60,7 +63,10 @@ fun CalendarScreen(diary: DiaryViewModel) {
                         else YearMonth.from(date).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)).replaceFirstChar { it.titlecase(locale) },
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 }
-                EverisTextButton(onClick = { anchorText = LocalDate.now(RsueData.zone).toString() }) { Text(stringResource(R.string.today)) }
+                if (!compact) EverisTextButton(onClick = { anchorText = LocalDate.now(RsueData.zone).toString() }) { Text(stringResource(R.string.today)) }
+            }
+            if (compact) EverisIconButton(onClick = { anchorText = LocalDate.now(RsueData.zone).toString() }) {
+                Icon(painterResource(R.drawable.ic_calendar_agenda), stringResource(R.string.today))
             }
             EverisIconButton(onClick = { anchorText = (if (mode == 0) anchor.plusWeeks(1) else anchor.plusMonths(1)).toString() }) {
                 Icon(painterResource(R.drawable.ic_chevron_right), next)
@@ -93,7 +99,14 @@ fun CalendarScreen(diary: DiaryViewModel) {
                 item("period-totals") {
                     Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.extraLarge) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(stringResource(R.string.lesson_count, summary.lessonCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(stringResource(R.string.lesson_count, summary.lessonCount), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                if (compact) EverisIconButton(onClick = { summaryExpanded = !summaryExpanded }) {
+                                    Icon(painterResource(R.drawable.ic_expand_more), stringResource(R.string.loaded_schedule_stats))
+                                }
+                            }
+                            androidx.compose.animation.AnimatedVisibility(!compact || summaryExpanded) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 listOf(LessonType.LECTURE to R.string.lecture_count, LessonType.PRACTICE to R.string.practice_count, LessonType.LABORATORY to R.string.lab_count).forEach { (type, label) ->
                                     val colors = lessonColors(type)
@@ -104,6 +117,8 @@ fun CalendarScreen(diary: DiaryViewModel) {
                                 Text(stringResource(R.string.study_total, compactDuration(summary.teaching)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                             }
                             if (!summary.complete) Text(stringResource(R.string.partial_calendar), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            }
                         }
                     }
                 }
@@ -113,12 +128,14 @@ fun CalendarScreen(diary: DiaryViewModel) {
                         val coverage = remember(day, published, allLessons) { dayCoverage(day, published, allLessons, RsueData.zone) }
                         val daily = remember(day, allLessons, coverage) { summarizeDay(day, RsueData.zone, lessons, coverage) }
                         Card(onClick = { diary.requestDay(day) }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Column(Modifier.width(68.dp)) {
+                            BoxWithConstraints(Modifier.fillMaxWidth().padding(12.dp)) {
+                                val compact = maxWidth < 320.dp || LocalConfiguration.current.fontScale > 1.3f
+                                val dateLabel: @Composable () -> Unit = { Column {
                                     Text(day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale), style = MaterialTheme.typography.labelLarge)
                                     Text(day.format(DateTimeFormatter.ofPattern("d MMM", locale)), style = MaterialTheme.typography.bodySmall)
-                                }
-                                FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                } }
+                                val tiles: @Composable (Modifier) -> Unit = { modifier ->
+                                FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(5.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                     lessons.forEachIndexed { index, lesson ->
                                         val description = "${index + 1}. ${lesson.disciplineName}, ${stringResource(lessonTypeLabel(lesson.type))}, ${lesson.start.toLocalTime()}"
                                         val colors = lessonColors(lesson.type)
@@ -132,7 +149,18 @@ fun CalendarScreen(diary: DiaryViewModel) {
                                     }
                                     if (lessons.isEmpty()) Text(if (coverage.complete) "—" else "?", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(if (coverage.complete || lessons.isNotEmpty()) compactDuration(daily.teaching) else "—", style = MaterialTheme.typography.labelSmall)
+                                }
+                                val time: @Composable () -> Unit = {
+                                    Text(if (coverage.complete || lessons.isNotEmpty()) compactDuration(daily.teaching) else "—", style = MaterialTheme.typography.labelSmall)
+                                }
+                                if (compact) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Box(Modifier.weight(1f)) { dateLabel() }; time()
+                                    }
+                                    tiles(Modifier.fillMaxWidth())
+                                } else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Box(Modifier.width(68.dp)) { dateLabel() }; tiles(Modifier.weight(1f)); time()
+                                }
                             }
                         }
                     }

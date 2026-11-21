@@ -13,25 +13,40 @@ import java.time.format.DateTimeFormatter
 data class TeacherRef(val id: String, val sourceName: String, val name: String, val university: String)
 
 object UniversitySources {
-    val universities = listOf("rsue", "dstu")
-    fun groups(university: String): List<StudentGroup> = when (university) {
+    val universities = listOf("rsue", "dstu", "sfedu", "rgups", "iubip")
+    fun supportsTeacherTimetable(university: String): Boolean = university in setOf("rsue", "dstu", "sfedu")
+    fun remoteSearch(university: String): Boolean = university == "sfedu"
+    fun validTeacherId(university: String, id: String): Boolean = when (university) {
+        "rsue", "dstu" -> id.matches(Regex("[1-9][0-9]{0,11}"))
+        "sfedu" -> SfeduData.isUuid(id)
+        else -> false
+    }
+    fun groups(university: String, query: String = ""): List<StudentGroup> = when (university) {
         "rsue" -> RsueData().groups()
         "dstu" -> DstuData().groups()
+        "sfedu" -> SfeduData().groups(query)
+        "iubip" -> IubipData().groups()
+        "rgups" -> RgupsData().groups()
         else -> error("Unsupported public source")
     }
     fun schedule(group: StudentGroup): String = when (group.university) {
         "rsue" -> RsueData().schedule(group)
         "dstu" -> DstuData().schedule(group)
+        "sfedu" -> SfeduData().schedule(group)
+        "iubip" -> IubipData().schedule(group)
+        "rgups" -> RgupsData().schedule(group)
         else -> error("Unsupported public source")
     }
-    fun teachers(university: String): List<TeacherRef> = when (university) {
+    fun teachers(university: String, query: String = ""): List<TeacherRef> = when (university) {
         "rsue" -> RsueData().teachers()
         "dstu" -> DstuData().teachers()
+        "sfedu" -> SfeduData().teachers(query)
         else -> error("Unsupported public source")
     }
     fun teacherSchedule(teacher: TeacherRef): String = when (teacher.university) {
         "rsue" -> RsueData().teacherSchedule(teacher)
         "dstu" -> DstuData().teacherSchedule(teacher)
+        "sfedu" -> SfeduData().teacherSchedule(teacher)
         else -> error("Unsupported public source")
     }
 }
@@ -155,7 +170,13 @@ class DstuData {
 
 fun StudentGroup.toJson(): JSONObject = JSONObject().put("id", id).put("name", name).put("university", university)
 fun studentGroup(json: JSONObject): StudentGroup = StudentGroup(json.getString("id"), json.getString("name"),
-    json.optString("university").takeIf { it.isNotBlank() } ?: if (json.getString("id").startsWith("dstu:")) "dstu" else "rsue")
+    json.optString("university").takeIf { it.isNotBlank() } ?: when {
+        json.getString("id").startsWith("dstu:") -> "dstu"
+        json.getString("id").startsWith("sfedu:") -> "sfedu"
+        json.getString("id").startsWith("iubip:") -> "iubip"
+        json.getString("id").startsWith("rgups:") -> "rgups"
+        else -> "rsue"
+    })
 
 /** A portable schedule cannot silently change provider while keeping a familiar group name. */
 fun parseStudentSchedule(raw: String, group: StudentGroup): PublishedSchedule = RsueData.parseSchedule(raw, group.name).also {

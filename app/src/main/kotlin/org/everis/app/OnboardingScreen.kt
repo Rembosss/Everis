@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -95,7 +97,7 @@ fun SetupScreens(diary: DiaryViewModel) {
                         UniversitySelector(diary) { query = ""; selectedId = null; subgroup = "" }
                         GroupSearch(query, selected, state,
                             onQuery = { query = it; selectedId = null; subgroup = "" },
-                            onSelect = { query = it.name; selectedId = it.id; subgroup = "" }, onRetry = diary::loadGroups,
+                            onSelect = { query = it.name; selectedId = it.id; subgroup = "" }, onRetry = diary::loadGroups, onSearchQuery = diary::searchGroups,
                             subgroup = subgroup, onSubgroup = { subgroup = it })
                         val transfer = LocalTransferActions.current
                         EverisTextButton(onClick = transfer.importSchedule, enabled = !diary.backupBusy) { Text(stringResource(R.string.import_schedule)) }
@@ -160,7 +162,7 @@ private fun SetupPage(
                     EverisButton(onClick = onContinue, enabled = enabled,
                         modifier = Modifier.widthIn(min = if (fontScale > 1.3f) 216.dp else 156.dp, max = if (fontScale > 1.3f) 360.dp else 216.dp)
                             .fillMaxWidth(if (fontScale > 1.3f) 1f else 0.58f).padding(bottom = 24.dp).heightIn(min = 48.dp)) {
-                        Text(action, style = MaterialTheme.typography.labelLarge, maxLines = 1, softWrap = false)
+                        Text(action, style = MaterialTheme.typography.labelLarge, maxLines = 2, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -175,10 +177,15 @@ private fun SetupPage(
 internal fun GroupSearch(
     query: String, selected: StudentGroup?, state: DiaryState,
     onQuery: (String) -> Unit, onSelect: (StudentGroup) -> Unit, onRetry: () -> Unit,
+    onSearchQuery: (String) -> Unit = {},
     subgroup: String = "", onSubgroup: (String) -> Unit = {},
 ) {
     var expanded by rememberSaveable { mutableStateOf(query.isNotBlank() && selected == null) }
     val focus = LocalFocusManager.current
+    LaunchedEffect(query, state.catalogUniversity, selected?.id) {
+        if (selected == null && query.isNotBlank()) onSearchQuery(query)
+    }
+    val suggestionHeight = (visibleWindowHeight() * .4f).coerceIn(96.dp, 210.dp)
     val search by produceState("" to emptyList<StudentGroup>(), query, state.groups, state.catalogUniversity) {
         if (query.isBlank()) { value = query to emptyList(); return@produceState }
         delay(100)
@@ -187,27 +194,50 @@ internal fun GroupSearch(
                 .sortedBy { !it.name.startsWith(query.trim(), ignoreCase = true) }.take(15)
         }
     }
-    // Retain matching rows while the next search is being prepared. Never collapse the menu
-    // between keystrokes: it would resize/recenter the containing dialog on every character.
-    val suggestions = search.second.filter { it.university == state.catalogUniversity && it.name.contains(query.trim(), ignoreCase = true) }
+    // Keep the last result until the debounced query is ready; never flash an empty menu.
+    val suggestions = search.second.filter { it.university == state.catalogUniversity }
+    val motion = MaterialTheme.motionScheme
+    val rowHeight = (MaterialTheme.typography.bodyLarge.lineHeight.value * LocalConfiguration.current.fontScale + 16).dp.coerceAtLeast(48.dp)
+    val emptyHeight = (MaterialTheme.typography.bodySmall.lineHeight.value * LocalConfiguration.current.fontScale * 2 + 24).dp.coerceAtLeast(64.dp)
+    val desiredHeight = ((if (suggestions.isEmpty()) emptyHeight else rowHeight * suggestions.size) + 12.dp).coerceAtMost(suggestionHeight)
+    var settledHeight by remember { mutableStateOf(suggestionHeight) }
+    LaunchedEffect(search.first, query, state.groupsLoading, desiredHeight, suggestionHeight) {
+        if (search.first == query && !state.groupsLoading) settledHeight = desiredHeight
+        else if (settledHeight > suggestionHeight) settledHeight = suggestionHeight
+    }
+    val listHeight by animateDpAsState(settledHeight, androidx.compose.animation.core.tween(240,
+        easing = androidx.compose.animation.core.FastOutSlowInEasing), label = "group suggestions height")
+    var anchorWidth by remember { mutableIntStateOf(0) }
+    BackHandler(expanded && query.isNotBlank() && selected == null) { expanded = false }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(value = query, onValueChange = { expanded = it.isNotBlank(); onQuery(it.take(80)) }, singleLine = true,
+        Box(Modifier.fillMaxWidth()) {
+            OutlinedTextField(value = query, onValueChange = { expanded = it.isNotBlank(); onQuery(it.take(80)) },
+                singleLine = true, shape = EverisInputShape, colors = groupButtonFieldColors(),
                 placeholder = { Text(stringResource(R.string.group_number)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = everisFieldMinHeight())
+                    .onSizeChanged { anchorWidth = it.width }
+                    .onFocusChanged {
+                        if (!it.isFocused) expanded = false
+                        else if (query.isNotBlank() && selected == null) expanded = true
+                    },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
-        AnimatedVisibility(expanded && query.isNotBlank() && selected == null,
-            enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-            Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                LazyColumn(Modifier.fillMaxWidth().height(210.dp), contentPadding = PaddingValues(vertical = 6.dp)) {
+            AnchoredMenu(expanded && query.isNotBlank() && selected == null, anchorWidth, { expanded = false },
+                focusable = false, preferBelow = true, maxHeight = suggestionHeight, scrollable = false, reserveWindowHeight = true) {
+                LazyColumn(Modifier.fillMaxWidth().height(listHeight.coerceIn(1.dp, suggestionHeight)),
+                    contentPadding = PaddingValues(vertical = 6.dp)) {
                     if (suggestions.isEmpty()) item("search-state") {
-                        Box(Modifier.fillMaxWidth().height(190.dp).padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.fillMaxWidth().height(emptyHeight).padding(16.dp), contentAlignment = Alignment.Center) {
                             if (search.first != query || state.groupsLoading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-                            else Text(stringResource(if (state.groupsFailed) R.string.groups_error else R.string.no_groups), style = MaterialTheme.typography.bodyMedium)
+                            else Text(stringResource(if (state.groupsFailed) R.string.groups_error else R.string.no_groups), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     items(suggestions, key = { it.id }) { group ->
-                        DropdownMenuItem(text = { Text(group.name) }, onClick = { expanded = false; onSelect(group); focus.clearFocus() })
+                        DropdownMenuItem(modifier = Modifier.height(rowHeight).animateItem(
+                            fadeInSpec = motion.fastEffectsSpec(), placementSpec = motion.defaultSpatialSpec(), fadeOutSpec = motion.fastEffectsSpec()),
+                            colors = MenuDefaults.itemColors(textColor = ButtonDefaults.outlinedButtonColors().contentColor),
+                            text = { Text(group.name, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+                            onClick = { expanded = false; onSelect(group); focus.clearFocus() })
                     }
                 }
             }

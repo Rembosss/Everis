@@ -29,8 +29,8 @@ android {
             providers.gradleProperty("diaryQaApplicationId").getOrElse("org.everis.qa.pre01") else "org.everis.app"
         minSdk = 31
         targetSdk = 37
-        versionCode = 10
-        versionName = "0.2-beta"
+        versionCode = 16
+        versionName = "0.3-beta"
         buildConfigField("String", "UPDATE_REPOSITORY", "\"Rembosss/Everis\"")
     }
 
@@ -82,6 +82,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:security"))
     implementation(project(":core:sources"))
+    implementation("org.jsoup:jsoup:1.24.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.work:work-runtime-ktx:2.11.2")
